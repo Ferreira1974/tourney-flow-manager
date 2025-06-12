@@ -282,7 +282,7 @@ const ParticipantManager = ({ tournamentData, onUpdate }: ParticipantManagerProp
                     <Checkbox
                       id="head-of-key"
                       checked={isHeadOfKey}
-                      onCheckedChange={setIsHeadOfKey}
+                      onCheckedChange={(checked) => setIsHeadOfKey(checked === true)}
                       disabled={isFull}
                     />
                     <label htmlFor="head-of-key" className="text-sm text-gray-300">
@@ -363,7 +363,9 @@ const ParticipantManager = ({ tournamentData, onUpdate }: ParticipantManagerProp
                       {participant.name}
                     </span>
                     {participant.isHeadOfKey && (
-                      <Crown className="w-4 h-4 text-yellow-400 inline ml-2" title="Cabeça de Chave" />
+                      <span className="inline-flex items-center ml-2" title="Cabeça de Chave">
+                        <Crown className="w-4 h-4 text-yellow-400" />
+                      </span>
                     )}
                     {participant.players && (
                       <div className="text-sm text-gray-400">
