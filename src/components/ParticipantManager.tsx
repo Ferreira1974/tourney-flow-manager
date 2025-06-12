@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { Users, Plus, Trash2, Edit2, Crown, Shuffle, Play, Printer, List } from 'lucide-react';
+import { Users, Plus, Trash2, Edit2, Crown, Shuffle, Play, Printer } from 'lucide-react';
 
 interface ParticipantManagerProps {
   tournamentData: any;
@@ -212,7 +212,7 @@ const ParticipantManager = ({ tournamentData, onUpdate }: ParticipantManagerProp
   };
 
   const handlePrintMatches = () => {
-    // Open matches in new window for printing
+    // Open matches in new window for printing without scores
     const matchesWindow = window.open('', '_blank');
     if (matchesWindow) {
       const matches = tournamentData.matches || [];
@@ -221,16 +221,58 @@ const ParticipantManager = ({ tournamentData, onUpdate }: ParticipantManagerProp
           <head>
             <title>Lista de Jogos - ${tournamentData.name}</title>
             <style>
-              body { font-family: Arial, sans-serif; margin: 20px; }
-              .header { text-align: center; margin-bottom: 30px; }
-              .match { margin: 10px 0; padding: 10px; border: 1px solid #ccc; }
-              @media print { body { margin: 0; } }
+              body { 
+                font-family: Arial, sans-serif; 
+                margin: 20px; 
+                line-height: 1.6;
+              }
+              .header { 
+                text-align: center; 
+                margin-bottom: 30px; 
+                border-bottom: 2px solid #333;
+                padding-bottom: 20px;
+              }
+              .match { 
+                margin: 15px 0; 
+                padding: 15px; 
+                border: 1px solid #ccc; 
+                border-radius: 8px;
+                background-color: #f9f9f9;
+              }
+              .match-number {
+                font-weight: bold;
+                color: #2563eb;
+                font-size: 1.1em;
+              }
+              .teams {
+                margin-top: 8px;
+                font-size: 1.05em;
+              }
+              .vs {
+                color: #666;
+                font-weight: bold;
+                margin: 0 10px;
+              }
+              .phase {
+                background-color: #e5e7eb;
+                padding: 4px 8px;
+                border-radius: 4px;
+                font-size: 0.9em;
+                color: #374151;
+                display: inline-block;
+                margin-top: 8px;
+              }
+              @media print { 
+                body { margin: 0; }
+                .match { break-inside: avoid; }
+              }
             </style>
           </head>
           <body>
             <div class="header">
               <h1>${tournamentData.name}</h1>
-              <h2>Lista de Jogos</h2>
+              <h2>Lista de Jogos para Acompanhamento</h2>
+              <p>Data de Geração: ${new Date().toLocaleDateString('pt-BR')}</p>
             </div>
       `;
 
@@ -239,8 +281,14 @@ const ParticipantManager = ({ tournamentData, onUpdate }: ParticipantManagerProp
         const team2Name = getTeamDisplayName(match.teamIds[1]);
         matchesHTML += `
           <div class="match">
-            <strong>Jogo ${index + 1}:</strong> ${team1Name} vs ${team2Name}
-            ${match.score1 !== null ? `<br>Resultado: ${match.score1} x ${match.score2}` : ''}
+            <div class="match-number">Jogo ${index + 1}</div>
+            <div class="teams">
+              ${team1Name} <span class="vs">vs</span> ${team2Name}
+            </div>
+            ${match.phase ? `<div class="phase">${match.phase}</div>` : ''}
+            <div style="margin-top: 15px; border-top: 1px dashed #ccc; padding-top: 10px;">
+              <strong>Resultado:</strong> _____ x _____
+            </div>
           </div>
         `;
       });
@@ -391,26 +439,17 @@ const ParticipantManager = ({ tournamentData, onUpdate }: ParticipantManagerProp
         </Card>
       )}
 
-      {/* Print and View Matches Buttons for Super 8 */}
-      {tournamentData.format === 'super8' && tournamentData.matches && tournamentData.matches.length > 0 && (
+      {/* Print Matches Button for all formats */}
+      {tournamentData.matches && tournamentData.matches.length > 0 && (
         <Card className="bg-gray-800 border-gray-700 p-4">
           <h4 className="text-lg font-semibold text-white mb-3">Opções de Jogos</h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <Button
-              onClick={handlePrintMatches}
-              className="bg-blue-600 hover:bg-blue-700 flex items-center gap-2"
-            >
-              <Printer className="w-4 h-4" />
-              Imprimir Lista de Jogos
-            </Button>
-            <Button
-              onClick={() => window.open('#', '_self')} // Switch to matches tab
-              className="bg-green-600 hover:bg-green-700 flex items-center gap-2"
-            >
-              <List className="w-4 h-4" />
-              Consultar Jogos
-            </Button>
-          </div>
+          <Button
+            onClick={handlePrintMatches}
+            className="w-full bg-blue-600 hover:bg-blue-700 flex items-center justify-center gap-2"
+          >
+            <Printer className="w-4 h-4" />
+            Imprimir Lista de Jogos (Backup)
+          </Button>
         </Card>
       )}
 
