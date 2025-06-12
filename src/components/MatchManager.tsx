@@ -1,0 +1,298 @@
+
+import React, { useState, useEffect } from 'react';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
+import { Trophy, Play, Check, Clock, FileText } from 'lucide-react';
+import { generateMatches } from '@/utils/tournamentLogic';
+
+interface MatchManagerProps {
+  tournamentData: any;
+  onUpdate: (updates: any) => void;
+}
+
+const MatchManager = ({ tournamentData, onUpdate }: MatchManagerProps) => {
+  const { toast } = useToast();
+  const [scores, setScores] = useState<{ [key: string]: { score1: string; score2: string } }>({});
+
+  useEffect(() => {
+    // Generate matches if needed and not already generated
+    if (tournamentData.status !== 'registration' && (!tournamentData.matches || tournamentData.matches.length === 0)) {
+      const matches = generateMatches(tournamentData);
+      if (matches.length > 0) {
+        onUpdate({ matches });
+      }
+    }
+  }, [tournamentData.status]);
+
+  const matches = tournamentData.matches || [];
+  const currentPhaseMatches = matches.filter(match => match.phase === tournamentData.status);
+
+  const handleScoreChange = (matchId: string, scoreType: 'score1' | 'score2', value: string) => {
+    setScores(prev => ({
+      ...prev,
+      [matchId]: {
+        ...prev[matchId],
+        [scoreType]: value
+      }
+    }));
+  };
+
+  const handleSaveScore = (matchId: string) => {
+    const matchScores = scores[matchId];
+    if (!matchScores || !matchScores.score1 || !matchScores.score2) {
+      toast({
+        title: "Erro",
+        description: "Preencha ambos os placares.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const score1 = parseInt(matchScores.score1);
+    const score2 = parseInt(matchScores.score2);
+
+    if (isNaN(score1) || isNaN(score2) || score1 < 0 || score2 < 0) {
+      toast({
+        title: "Erro",
+        description: "Placares devem ser números válidos.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (score1 === score2) {
+      toast({
+        title: "Erro",
+        description: "Não é permitido empate. Um time deve vencer.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const match = matches.find(m => m.id === matchId);
+    if (!match) return;
+
+    const winnerId = score1 > score2 ? match.teamIds[0] : match.teamIds[1];
+    
+    const updatedMatches = matches.map(m => 
+      m.id === matchId 
+        ? { ...m, score1, score2, winnerId, completed: true }
+        : m
+    );
+
+    // Update team statistics
+    const teams = [...(tournamentData.teams || [])];
+    const team1 = teams.find(t => Array.isArray(match.teamIds[0]) ? match.teamIds[0].includes(t.id) : t.id === match.teamIds[0]);
+    const team2 = teams.find(t => Array.isArray(match.teamIds[1]) ? match.teamIds[1].includes(t.id) : t.id === match.teamIds[1]);
+
+    if (team1) {
+      team1.gamesPlayed = (team1.gamesPlayed || 0) + 1;
+      team1.pointsFor = (team1.pointsFor || 0) + score1;
+      team1.pointsAgainst = (team1.pointsAgainst || 0) + score2;
+      if (winnerId === team1.id || (Array.isArray(winnerId) && winnerId.includes(team1.id))) {
+        team1.wins = (team1.wins || 0) + 1;
+      }
+    }
+
+    if (team2) {
+      team2.gamesPlayed = (team2.gamesPlayed || 0) + 1;
+      team2.pointsFor = (team2.pointsFor || 0) + score2;
+      team2.pointsAgainst = (team2.pointsAgainst || 0) + score1;
+      if (winnerId === team2.id || (Array.isArray(winnerId) && winnerId.includes(team2.id))) {
+        team2.wins = (team2.wins || 0) + 1;
+      }
+    }
+
+    onUpdate({ matches: updatedMatches, teams });
+
+    // Clear the scores for this match
+    setScores(prev => {
+      const newScores = { ...prev };
+      delete newScores[matchId];
+      return newScores;
+    });
+
+    toast({
+      title: "Placar salvo",
+      description: "Resultado registrado com sucesso!",
+    });
+  };
+
+  const getTeamName = (teamId: any) => {
+    if (Array.isArray(teamId)) {
+      // For Super 8 format where teamId is an array of player IDs
+      const playerNames = teamId.map(playerId => {
+        const player = (tournamentData.players || []).find(p => p.id === playerId);
+        return player ? player.name : 'Jogador';
+      });
+      return playerNames.join(' / ');
+    }
+    
+    const team = (tournamentData.teams || []).find(t => t.id === teamId);
+    return team ? team.name : 'Time';
+  };
+
+  const getPhaseTitle = (phase: string) => {
+    const phaseNames = {
+      'group_stage': 'Fase de Grupos',
+      'phase1_groups': 'Fase 1 - Grupos',
+      'phase2_playoffs': 'Fase 2 - Playoffs',
+      'phase3_final': 'Fase 3 - Final',
+      'playing': 'Jogos do Torneio',
+      'finished': 'Torneio Finalizado'
+    };
+    return phaseNames[phase] || phase;
+  };
+
+  const isPhaseComplete = () => {
+    return currentPhaseMatches.length > 0 && currentPhaseMatches.every(match => match.winnerId);
+  };
+
+  const handleNextPhase = () => {
+    // Logic for advancing to next phase
+    let nextStatus = '';
+    switch (tournamentData.status) {
+      case 'group_stage':
+        nextStatus = 'finished';
+        break;
+      case 'phase1_groups':
+        nextStatus = 'phase2_playoffs';
+        break;
+      case 'phase2_playoffs':
+        nextStatus = 'phase3_final';
+        break;
+      case 'phase3_final':
+      case 'playing':
+        nextStatus = 'finished';
+        break;
+    }
+
+    if (nextStatus) {
+      onUpdate({ status: nextStatus });
+      toast({
+        title: nextStatus === 'finished' ? "Torneio finalizado" : "Próxima fase iniciada",
+        description: nextStatus === 'finished' ? "Parabéns! O torneio foi concluído." : "A próxima fase foi iniciada.",
+      });
+    }
+  };
+
+  if (matches.length === 0) {
+    return (
+      <Card className="bg-gray-800 border-gray-700 p-8 text-center">
+        <Clock className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+        <h3 className="text-xl font-bold text-white mb-2">Aguardando Jogos</h3>
+        <p className="text-gray-400">
+          Os jogos aparecerão aqui quando forem gerados na aba de participantes.
+        </p>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <Card className="bg-gray-800 border-gray-700 p-6">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+            <Trophy className="w-6 h-6" />
+            {getPhaseTitle(tournamentData.status)}
+          </h2>
+          <Badge variant="outline" className="text-lg px-3 py-1">
+            {currentPhaseMatches.filter(m => m.winnerId).length} / {currentPhaseMatches.length} concluídos
+          </Badge>
+        </div>
+
+        <div className="space-y-4">
+          {currentPhaseMatches.map((match) => (
+            <div key={match.id} className="bg-gray-700 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-4 flex-1">
+                  <div className="text-center flex-1">
+                    <div className="text-white font-medium">
+                      {getTeamName(match.teamIds[0])}
+                    </div>
+                  </div>
+                  <div className="text-gray-400 text-sm">vs</div>
+                  <div className="text-center flex-1">
+                    <div className="text-white font-medium">
+                      {getTeamName(match.teamIds[1])}
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="ml-4">
+                  {match.winnerId ? (
+                    <div className="flex items-center gap-2">
+                      <Badge className="bg-green-600 text-white">
+                        <Check className="w-3 h-3 mr-1" />
+                        Finalizado
+                      </Badge>
+                      <div className="text-white font-bold">
+                        {match.score1} - {match.score2}
+                      </div>
+                    </div>
+                  ) : (
+                    <Badge variant="outline" className="text-yellow-400 border-yellow-400">
+                      <Clock className="w-3 h-3 mr-1" />
+                      Pendente
+                    </Badge>
+                  )}
+                </div>
+              </div>
+
+              {!match.winnerId && (
+                <div className="flex items-center gap-4 mt-4 p-4 bg-gray-600 rounded">
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="number"
+                      min="0"
+                      placeholder="0"
+                      value={scores[match.id]?.score1 || ''}
+                      onChange={(e) => handleScoreChange(match.id, 'score1', e.target.value)}
+                      className="w-16 text-center bg-gray-700 border-gray-500 text-white"
+                    />
+                    <span className="text-gray-400">-</span>
+                    <Input
+                      type="number"
+                      min="0"
+                      placeholder="0"
+                      value={scores[match.id]?.score2 || ''}
+                      onChange={(e) => handleScoreChange(match.id, 'score2', e.target.value)}
+                      className="w-16 text-center bg-gray-700 border-gray-500 text-white"
+                    />
+                  </div>
+                  <Button
+                    onClick={() => handleSaveScore(match.id)}
+                    size="sm"
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    Salvar Resultado
+                  </Button>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {isPhaseComplete() && tournamentData.status !== 'finished' && (
+          <div className="mt-6 text-center">
+            <Button
+              onClick={handleNextPhase}
+              size="lg"
+              className="bg-green-600 hover:bg-green-700 font-bold"
+            >
+              {tournamentData.status === 'playing' || tournamentData.status === 'phase3_final' 
+                ? 'Finalizar Torneio' 
+                : 'Iniciar Próxima Fase'
+              }
+            </Button>
+          </div>
+        )}
+      </Card>
+    </div>
+  );
+};
+
+export default MatchManager;
