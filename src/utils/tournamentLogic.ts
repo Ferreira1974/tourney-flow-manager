@@ -9,13 +9,13 @@ export const generateMatches = (tournamentData: any) => {
       matches = generateSuper8Matches(players || []);
       break;
     case 'doubles_groups':
-      matches = generateDoublesGroupMatches(teams || [], tournamentData.size);
+      matches = generateDoublesGroupMatches(teams || [], tournamentData.size, status);
       break;
     case 'super16':
       matches = generateSuper16Matches(teams || []);
       break;
     case 'king_of_the_court':
-      matches = generateKingOfCourtMatches(players || [], status);
+      matches = generateKingOfCourtMatches(teams || [], status);
       break;
   }
   
@@ -68,27 +68,63 @@ const generateSuper8Matches = (players: any[]) => {
   return matches;
 };
 
-const generateDoublesGroupMatches = (teams: any[], size: number) => {
-  const groupSize = size === 9 ? 3 : 4;
-  const numGroups = Math.ceil(teams.length / groupSize);
-  
-  // Shuffle teams and distribute into groups
-  const shuffledTeams = [...teams].sort(() => Math.random() - 0.5);
-  const groups: any[] = [];
-  
-  for (let i = 0; i < numGroups; i++) {
-    groups.push({
-      id: `g_group_stage_${i}`,
-      name: `Grupo ${String.fromCharCode(65 + i)}`,
-      teamIds: []
+const generateDoublesGroupMatches = (teams: any[], size: number, status: string) => {
+  if (status === 'group_stage') {
+    const groupSize = size === 9 ? 3 : 4;
+    const numGroups = Math.ceil(teams.length / groupSize);
+    
+    // Shuffle teams and distribute into groups
+    const shuffledTeams = [...teams].sort(() => Math.random() - 0.5);
+    const groups: any[] = [];
+    
+    for (let i = 0; i < numGroups; i++) {
+      groups.push({
+        id: `g_group_stage_${i}`,
+        name: `Grupo ${String.fromCharCode(65 + i)}`,
+        teamIds: []
+      });
+    }
+    
+    shuffledTeams.forEach((team, index) => {
+      groups[index % numGroups].teamIds.push(team.id);
     });
+
+    return generateRoundRobinMatches(groups, 'group_stage');
+  } else if (status === 'playoffs') {
+    return generateDoublesPlayoffMatches(teams);
   }
   
-  shuffledTeams.forEach((team, index) => {
-    groups[index % numGroups].teamIds.push(team.id);
-  });
+  return [];
+};
 
-  return generateRoundRobinMatches(groups, 'group_stage');
+const generateDoublesPlayoffMatches = (qualifiedTeams: any[]) => {
+  const matches: any[] = [];
+  let matchIdCounter = 0;
+
+  // Create playoff brackets based on number of qualified teams
+  const numTeams = qualifiedTeams.length;
+  let currentRound = 'playoffs';
+  
+  if (numTeams === 8) currentRound = 'quarterfinals';
+  else if (numTeams === 4) currentRound = 'semifinals';
+  else if (numTeams === 2) currentRound = 'final';
+
+  // Pair teams for elimination matches
+  for (let i = 0; i < qualifiedTeams.length; i += 2) {
+    if (i + 1 < qualifiedTeams.length) {
+      matches.push({
+        id: `m_${currentRound}_${matchIdCounter++}`,
+        phase: 'playoffs',
+        round: currentRound,
+        teamIds: [qualifiedTeams[i].id, qualifiedTeams[i + 1].id],
+        score1: null,
+        score2: null,
+        winnerId: null
+      });
+    }
+  }
+
+  return matches;
 };
 
 const generateSuper16Matches = (teams: any[]) => {
@@ -111,26 +147,46 @@ const generateSuper16Matches = (teams: any[]) => {
   return generateRoundRobinMatches(groups, 'group_stage');
 };
 
-const generateKingOfCourtMatches = (players: any[], phase: string) => {
+const generateKingOfCourtMatches = (teams: any[], phase: string) => {
   if (phase === 'phase1_groups') {
-    // Convert players to teams for consistency
-    const teams = players.map(p => ({
-      id: p.id,
-      name: p.name,
-      players: [p.name]
-    }));
-    
-    // Create 4 groups of 4 players each
+    // Create 4 groups of 4 teams each
     const groups = [];
+    const shuffledTeams = [...teams].sort(() => Math.random() - 0.5);
+    
     for (let i = 0; i < 4; i++) {
       groups.push({
         id: `g_phase1_groups_${i}`,
         name: `Grupo ${String.fromCharCode(65 + i)}`,
-        teamIds: teams.slice(i * 4, (i + 1) * 4).map(t => t.id)
+        teamIds: shuffledTeams.slice(i * 4, (i + 1) * 4).map(t => t.id)
       });
     }
     
     return generateRoundRobinMatches(groups, 'phase1_groups');
+  } else if (phase === 'phase2_playoffs') {
+    // 8 qualified teams (2 from each group) play in 2 groups of 4
+    const groups = [
+      {
+        id: 'g_phase2_playoffs_0',
+        name: 'Grupo Semifinal A',
+        teamIds: teams.slice(0, 4).map(t => t.id)
+      },
+      {
+        id: 'g_phase2_playoffs_1',
+        name: 'Grupo Semifinal B', 
+        teamIds: teams.slice(4, 8).map(t => t.id)
+      }
+    ];
+    
+    return generateRoundRobinMatches(groups, 'phase2_playoffs');
+  } else if (phase === 'phase3_final') {
+    // Final 4 teams all play each other
+    const groups = [{
+      id: 'g_phase3_final_0',
+      name: 'Grupo Final',
+      teamIds: teams.map(t => t.id)
+    }];
+    
+    return generateRoundRobinMatches(groups, 'phase3_final');
   }
   
   return [];
@@ -160,6 +216,62 @@ const generateRoundRobinMatches = (groups: any[], phase: string) => {
   });
 
   return matches;
+};
+
+export const getQualifiedTeams = (tournamentData: any, phase: string) => {
+  const teams = tournamentData.teams || [];
+  const matches = tournamentData.matches || [];
+  
+  if (phase === 'group_stage') {
+    // Get top teams from each group
+    const groups = tournamentData.groups || [];
+    const qualifiedTeams: any[] = [];
+    
+    groups.forEach(group => {
+      const groupTeams = teams.filter(team => group.teamIds.includes(team.id));
+      const groupMatches = matches.filter(match => match.groupId === group.id && match.winnerId);
+      
+      // Calculate points for each team in the group
+      groupTeams.forEach(team => {
+        team.groupPoints = 0;
+        team.groupWins = 0;
+        team.groupPointsFor = 0;
+        team.groupPointsAgainst = 0;
+        
+        groupMatches.forEach(match => {
+          if (match.teamIds.includes(team.id)) {
+            const isTeam1 = match.teamIds[0] === team.id;
+            const teamScore = isTeam1 ? match.score1 : match.score2;
+            const opponentScore = isTeam1 ? match.score2 : match.score1;
+            
+            team.groupPointsFor += teamScore;
+            team.groupPointsAgainst += opponentScore;
+            
+            if (match.winnerId === team.id) {
+              team.groupPoints += 3; // 3 points for win
+              team.groupWins += 1;
+            }
+          }
+        });
+      });
+      
+      // Sort teams by points, then by point difference, then by points scored
+      groupTeams.sort((a, b) => {
+        if (b.groupPoints !== a.groupPoints) return b.groupPoints - a.groupPoints;
+        const aDiff = a.groupPointsFor - a.groupPointsAgainst;
+        const bDiff = b.groupPointsFor - b.groupPointsAgainst;
+        if (bDiff !== aDiff) return bDiff - aDiff;
+        return b.groupPointsFor - a.groupPointsFor;
+      });
+      
+      // Qualify top 2 teams from each group
+      qualifiedTeams.push(...groupTeams.slice(0, 2));
+    });
+    
+    return qualifiedTeams;
+  }
+  
+  return [];
 };
 
 export const shuffleArray = (array: any[]) => {

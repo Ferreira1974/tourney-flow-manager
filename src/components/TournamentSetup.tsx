@@ -13,7 +13,7 @@ interface TournamentSetupProps {
 
 const TournamentSetup = ({ onCreateTournament }: TournamentSetupProps) => {
   const [selectedFormat, setSelectedFormat] = useState('');
-  const [tournamentName, setTournamentName] = useState('Copa de Verão 2025');
+  const [tournamentName, setTournamentName] = useState('');
   const [tournamentSize, setTournamentSize] = useState('');
 
   const formats = [

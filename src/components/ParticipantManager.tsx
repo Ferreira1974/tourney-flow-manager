@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { Users, Plus, Trash2, Edit2, Crown, Shuffle, Play } from 'lucide-react';
+import { Users, Plus, Trash2, Edit2, Crown, Shuffle, Play, Printer, List } from 'lucide-react';
 
 interface ParticipantManagerProps {
   tournamentData: any;
@@ -22,6 +22,7 @@ const ParticipantManager = ({ tournamentData, onUpdate }: ParticipantManagerProp
 
   const isDoublesFormat = tournamentData.format === 'doubles_groups';
   const isSuper16 = tournamentData.format === 'super16';
+  const isKingOfCourt = tournamentData.format === 'king_of_the_court';
   const requiredCount = getRequiredParticipantCount();
   const currentParticipants = getCurrentParticipants();
   const isFull = currentParticipants.length >= requiredCount;
@@ -32,7 +33,7 @@ const ParticipantManager = ({ tournamentData, onUpdate }: ParticipantManagerProp
   }
 
   function getCurrentParticipants() {
-    if (isDoublesFormat || (isSuper16 && tournamentData.teams?.length > 0)) {
+    if (isDoublesFormat || ((isSuper16 || isKingOfCourt) && tournamentData.teams?.length > 0)) {
       return tournamentData.teams || [];
     }
     return tournamentData.players || [];
@@ -57,7 +58,7 @@ const ParticipantManager = ({ tournamentData, onUpdate }: ParticipantManagerProp
     const newPlayer = {
       id: `p_${Date.now()}`,
       name: playerName.trim(),
-      isHeadOfKey: isSuper16 ? isHeadOfKey : false,
+      isHeadOfKey: (isSuper16 || isKingOfCourt) ? isHeadOfKey : false,
       gamesPlayed: 0,
       wins: 0,
       pointsFor: 0,
@@ -199,7 +200,8 @@ const ParticipantManager = ({ tournamentData, onUpdate }: ParticipantManagerProp
     // This will be implemented in the MatchManager component
     // For now, just switch to matches tab and trigger generation
     onUpdate({ 
-      status: tournamentData.format === 'super8' ? 'playing' : 'group_stage',
+      status: tournamentData.format === 'super8' ? 'playing' : 
+              tournamentData.format === 'king_of_the_court' ? 'phase1_groups' : 'group_stage',
       matchesGenerated: true 
     });
     
@@ -207,6 +209,60 @@ const ParticipantManager = ({ tournamentData, onUpdate }: ParticipantManagerProp
       title: "Jogos gerados",
       description: "Os jogos foram gerados com sucesso!",
     });
+  };
+
+  const handlePrintMatches = () => {
+    // Open matches in new window for printing
+    const matchesWindow = window.open('', '_blank');
+    if (matchesWindow) {
+      const matches = tournamentData.matches || [];
+      let matchesHTML = `
+        <html>
+          <head>
+            <title>Lista de Jogos - ${tournamentData.name}</title>
+            <style>
+              body { font-family: Arial, sans-serif; margin: 20px; }
+              .header { text-align: center; margin-bottom: 30px; }
+              .match { margin: 10px 0; padding: 10px; border: 1px solid #ccc; }
+              @media print { body { margin: 0; } }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <h1>${tournamentData.name}</h1>
+              <h2>Lista de Jogos</h2>
+            </div>
+      `;
+
+      matches.forEach((match, index) => {
+        const team1Name = getTeamDisplayName(match.teamIds[0]);
+        const team2Name = getTeamDisplayName(match.teamIds[1]);
+        matchesHTML += `
+          <div class="match">
+            <strong>Jogo ${index + 1}:</strong> ${team1Name} vs ${team2Name}
+            ${match.score1 !== null ? `<br>Resultado: ${match.score1} x ${match.score2}` : ''}
+          </div>
+        `;
+      });
+
+      matchesHTML += '</body></html>';
+      matchesWindow.document.write(matchesHTML);
+      matchesWindow.document.close();
+      matchesWindow.print();
+    }
+  };
+
+  const getTeamDisplayName = (teamId: any) => {
+    if (Array.isArray(teamId)) {
+      const playerNames = teamId.map(playerId => {
+        const player = (tournamentData.players || []).find(p => p.id === playerId);
+        return player ? player.name : 'Jogador';
+      });
+      return playerNames.join(' / ');
+    }
+    
+    const team = (tournamentData.teams || []).find(t => t.id === teamId);
+    return team ? team.name : 'Time';
   };
 
   const handleDeleteParticipant = (id: string, type: 'player' | 'team') => {
@@ -220,8 +276,8 @@ const ParticipantManager = ({ tournamentData, onUpdate }: ParticipantManagerProp
     });
   };
 
-  const canDrawDoubles = isSuper16 && isFull && (tournamentData.teams || []).length === 0;
-  const canGenerateMatches = isFull && (isSuper16 ? (tournamentData.teams || []).length > 0 : true);
+  const canDrawDoubles = (isSuper16 || isKingOfCourt) && isFull && (tournamentData.teams || []).length === 0;
+  const canGenerateMatches = isFull && ((isSuper16 || isKingOfCourt) ? (tournamentData.teams || []).length > 0 : true);
 
   return (
     <div className="space-y-6">
@@ -266,26 +322,25 @@ const ParticipantManager = ({ tournamentData, onUpdate }: ParticipantManagerProp
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="flex gap-4 items-end">
-                <div className="flex-1">
-                  <Input
-                    value={playerName}
-                    onChange={(e) => setPlayerName(e.target.value)}
-                    placeholder="Nome do Jogador"
-                    disabled={isFull}
-                    className="bg-gray-700 border-gray-600 text-white"
-                    onKeyPress={(e) => e.key === 'Enter' && handleAddPlayer()}
-                  />
-                </div>
-                {isSuper16 && (
+              <div className="space-y-3">
+                <Input
+                  value={playerName}
+                  onChange={(e) => setPlayerName(e.target.value)}
+                  placeholder="Nome do Jogador"
+                  disabled={isFull}
+                  className="bg-gray-700 border-gray-600 text-white"
+                  onKeyPress={(e) => e.key === 'Enter' && handleAddPlayer()}
+                />
+                {(isSuper16 || isKingOfCourt) && (
                   <div className="flex items-center space-x-2">
                     <Checkbox
                       id="head-of-key"
                       checked={isHeadOfKey}
                       onCheckedChange={(checked) => setIsHeadOfKey(checked === true)}
                       disabled={isFull}
+                      className="border-yellow-400 data-[state=checked]:bg-yellow-500"
                     />
-                    <label htmlFor="head-of-key" className="text-sm text-gray-300">
+                    <label htmlFor="head-of-key" className="text-sm text-yellow-400 font-medium">
                       Cabeça de Chave
                     </label>
                   </div>
@@ -333,6 +388,29 @@ const ParticipantManager = ({ tournamentData, onUpdate }: ParticipantManagerProp
               </Button>
             </div>
           )}
+        </Card>
+      )}
+
+      {/* Print and View Matches Buttons for Super 8 */}
+      {tournamentData.format === 'super8' && tournamentData.matches && tournamentData.matches.length > 0 && (
+        <Card className="bg-gray-800 border-gray-700 p-4">
+          <h4 className="text-lg font-semibold text-white mb-3">Opções de Jogos</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <Button
+              onClick={handlePrintMatches}
+              className="bg-blue-600 hover:bg-blue-700 flex items-center gap-2"
+            >
+              <Printer className="w-4 h-4" />
+              Imprimir Lista de Jogos
+            </Button>
+            <Button
+              onClick={() => window.open('#', '_self')} // Switch to matches tab
+              className="bg-green-600 hover:bg-green-700 flex items-center gap-2"
+            >
+              <List className="w-4 h-4" />
+              Consultar Jogos
+            </Button>
+          </div>
         </Card>
       )}
 

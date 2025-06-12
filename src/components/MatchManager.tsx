@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { Trophy, Play, Check, Clock, FileText } from 'lucide-react';
-import { generateMatches } from '@/utils/tournamentLogic';
+import { generateMatches, getQualifiedTeams } from '@/utils/tournamentLogic';
 
 interface MatchManagerProps {
   tournamentData: any;
@@ -85,28 +85,60 @@ const MatchManager = ({ tournamentData, onUpdate }: MatchManagerProps) => {
 
     // Update team statistics
     const teams = [...(tournamentData.teams || [])];
-    const team1 = teams.find(t => Array.isArray(match.teamIds[0]) ? match.teamIds[0].includes(t.id) : t.id === match.teamIds[0]);
-    const team2 = teams.find(t => Array.isArray(match.teamIds[1]) ? match.teamIds[1].includes(t.id) : t.id === match.teamIds[1]);
+    const players = [...(tournamentData.players || [])];
+    
+    // For Super 8 format, update individual player stats
+    if (tournamentData.format === 'super8') {
+      match.teamIds[0].forEach((playerId: string) => {
+        const player = players.find(p => p.id === playerId);
+        if (player) {
+          player.gamesPlayed = (player.gamesPlayed || 0) + 1;
+          player.pointsFor = (player.pointsFor || 0) + score1;
+          player.pointsAgainst = (player.pointsAgainst || 0) + score2;
+          if (Array.isArray(winnerId) && winnerId.includes(playerId)) {
+            player.wins = (player.wins || 0) + 1;
+          }
+        }
+      });
+      
+      match.teamIds[1].forEach((playerId: string) => {
+        const player = players.find(p => p.id === playerId);
+        if (player) {
+          player.gamesPlayed = (player.gamesPlayed || 0) + 1;
+          player.pointsFor = (player.pointsFor || 0) + score2;
+          player.pointsAgainst = (player.pointsAgainst || 0) + score1;
+          if (Array.isArray(winnerId) && winnerId.includes(playerId)) {
+            player.wins = (player.wins || 0) + 1;
+          }
+        }
+      });
+      
+      onUpdate({ matches: updatedMatches, players });
+    } else {
+      // For team-based formats
+      const team1 = teams.find(t => t.id === match.teamIds[0]);
+      const team2 = teams.find(t => t.id === match.teamIds[1]);
 
-    if (team1) {
-      team1.gamesPlayed = (team1.gamesPlayed || 0) + 1;
-      team1.pointsFor = (team1.pointsFor || 0) + score1;
-      team1.pointsAgainst = (team1.pointsAgainst || 0) + score2;
-      if (winnerId === team1.id || (Array.isArray(winnerId) && winnerId.includes(team1.id))) {
-        team1.wins = (team1.wins || 0) + 1;
+      if (team1) {
+        team1.gamesPlayed = (team1.gamesPlayed || 0) + 1;
+        team1.pointsFor = (team1.pointsFor || 0) + score1;
+        team1.pointsAgainst = (team1.pointsAgainst || 0) + score2;
+        if (winnerId === team1.id) {
+          team1.wins = (team1.wins || 0) + 1;
+        }
       }
-    }
 
-    if (team2) {
-      team2.gamesPlayed = (team2.gamesPlayed || 0) + 1;
-      team2.pointsFor = (team2.pointsFor || 0) + score2;
-      team2.pointsAgainst = (team2.pointsAgainst || 0) + score1;
-      if (winnerId === team2.id || (Array.isArray(winnerId) && winnerId.includes(team2.id))) {
-        team2.wins = (team2.wins || 0) + 1;
+      if (team2) {
+        team2.gamesPlayed = (team2.gamesPlayed || 0) + 1;
+        team2.pointsFor = (team2.pointsFor || 0) + score2;
+        team2.pointsAgainst = (team2.pointsAgainst || 0) + score1;
+        if (winnerId === team2.id) {
+          team2.wins = (team2.wins || 0) + 1;
+        }
       }
-    }
 
-    onUpdate({ matches: updatedMatches, teams });
+      onUpdate({ matches: updatedMatches, teams });
+    }
 
     // Clear the scores for this match
     setScores(prev => {
@@ -139,8 +171,9 @@ const MatchManager = ({ tournamentData, onUpdate }: MatchManagerProps) => {
     const phaseNames = {
       'group_stage': 'Fase de Grupos',
       'phase1_groups': 'Fase 1 - Grupos',
-      'phase2_playoffs': 'Fase 2 - Playoffs',
+      'phase2_playoffs': 'Fase 2 - Playoffs',  
       'phase3_final': 'Fase 3 - Final',
+      'playoffs': 'Playoffs',
       'playing': 'Jogos do Torneio',
       'finished': 'Torneio Finalizado'
     };
@@ -152,26 +185,66 @@ const MatchManager = ({ tournamentData, onUpdate }: MatchManagerProps) => {
   };
 
   const handleNextPhase = () => {
-    // Logic for advancing to next phase
     let nextStatus = '';
+    let updates: any = {};
+    
     switch (tournamentData.status) {
       case 'group_stage':
-        nextStatus = 'finished';
+        if (tournamentData.format === 'doubles_groups') {
+          const qualifiedTeams = getQualifiedTeams(tournamentData, 'group_stage');
+          const playoffMatches = generateMatches({ 
+            ...tournamentData, 
+            teams: qualifiedTeams, 
+            status: 'playoffs' 
+          });
+          updates = { 
+            status: 'playoffs', 
+            matches: [...tournamentData.matches, ...playoffMatches] 
+          };
+          nextStatus = 'playoffs';
+        } else {
+          nextStatus = 'finished';
+          updates = { status: nextStatus };
+        }
         break;
       case 'phase1_groups':
+        // Get top 2 from each group (8 teams total)
+        const phase1Qualified = getQualifiedTeams(tournamentData, 'phase1_groups');
+        const phase2Matches = generateMatches({
+          ...tournamentData,
+          teams: phase1Qualified,
+          status: 'phase2_playoffs'
+        });
+        updates = {
+          status: 'phase2_playoffs',
+          matches: [...tournamentData.matches, ...phase2Matches]
+        };
         nextStatus = 'phase2_playoffs';
         break;
       case 'phase2_playoffs':
+        // Get top 2 from each group (4 teams total) 
+        const phase2Qualified = getQualifiedTeams(tournamentData, 'phase2_playoffs');
+        const phase3Matches = generateMatches({
+          ...tournamentData,
+          teams: phase2Qualified,
+          status: 'phase3_final'
+        });
+        updates = {
+          status: 'phase3_final',
+          matches: [...tournamentData.matches, ...phase3Matches]
+        };
         nextStatus = 'phase3_final';
         break;
       case 'phase3_final':
       case 'playing':
+      case 'playoffs':
         nextStatus = 'finished';
+        updates = { status: nextStatus };
         break;
     }
 
     if (nextStatus) {
-      onUpdate({ status: nextStatus });
+      onUpdate(updates);
       toast({
         title: nextStatus === 'finished' ? "Torneio finalizado" : "Próxima fase iniciada",
         description: nextStatus === 'finished' ? "Parabéns! O torneio foi concluído." : "A próxima fase foi iniciada.",
@@ -283,7 +356,7 @@ const MatchManager = ({ tournamentData, onUpdate }: MatchManagerProps) => {
               size="lg"
               className="bg-green-600 hover:bg-green-700 font-bold"
             >
-              {tournamentData.status === 'playing' || tournamentData.status === 'phase3_final' 
+              {tournamentData.status === 'playing' || tournamentData.status === 'phase3_final' || tournamentData.status === 'playoffs'
                 ? 'Finalizar Torneio' 
                 : 'Iniciar Próxima Fase'
               }
