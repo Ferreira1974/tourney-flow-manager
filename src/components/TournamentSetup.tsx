@@ -72,7 +72,12 @@ const TournamentSetup = ({ onCreateTournament }: TournamentSetupProps) => {
 
   const handleFormatSelect = (formatId: string) => {
     setSelectedFormat(formatId);
-    setTournamentSize(''); // Reset size when format changes
+    // Para Super 8, definir automaticamente o tamanho
+    if (formatId === 'super8') {
+      setTournamentSize('8');
+    } else {
+      setTournamentSize(''); // Reset size quando formato muda
+    }
   };
 
   const handleCreateTournament = () => {
@@ -167,18 +172,24 @@ const TournamentSetup = ({ onCreateTournament }: TournamentSetupProps) => {
             <label className="block text-sm font-medium text-gray-300 mb-2">
               3. Número de Participantes
             </label>
-            <Select value={tournamentSize} onValueChange={setTournamentSize}>
-              <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
-                <SelectValue placeholder="Selecione o tamanho" />
-              </SelectTrigger>
-              <SelectContent className="bg-gray-700 border-gray-600">
-                {getSizeOptions(selectedFormat).map((option) => (
-                  <SelectItem key={option.value} value={option.value} className="text-white">
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {selectedFormat === 'super8' ? (
+              <div className="bg-gray-600 border border-gray-500 rounded-md px-3 py-2 text-gray-300">
+                8 jogadores (fixo)
+              </div>
+            ) : (
+              <Select value={tournamentSize} onValueChange={setTournamentSize}>
+                <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                  <SelectValue placeholder="Selecione o tamanho" />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-700 border-gray-600">
+                  {getSizeOptions(selectedFormat).map((option) => (
+                    <SelectItem key={option.value} value={option.value} className="text-white">
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
         )}
       </div>

@@ -13,7 +13,7 @@ import MatchManager from '@/components/MatchManager';
 import Leaderboard from '@/components/Leaderboard';
 import TournamentReport from '@/components/TournamentReport';
 import { useTournamentData } from '@/hooks/useTournamentData';
-import { Crown, Users, Trophy, FileText, Settings, RotateCcw } from 'lucide-react';
+import { Crown, Users, Trophy, FileText, RotateCcw } from 'lucide-react';
 
 const Index = () => {
   const { tournamentData, updateTournament, resetTournament, isLoading } = useTournamentData();
@@ -109,7 +109,7 @@ const Index = () => {
 
         {/* Main Content */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 bg-gray-800 mb-6">
+          <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 bg-gray-800 mb-6">
             <TabsTrigger value="participants" className="flex items-center gap-2">
               <Users className="w-4 h-4" />
               <span className="hidden sm:inline">Participantes</span>
@@ -121,10 +121,6 @@ const Index = () => {
             <TabsTrigger value="leaderboard" className="flex items-center gap-2">
               <Crown className="w-4 h-4" />
               <span className="hidden sm:inline">Classificação</span>
-            </TabsTrigger>
-            <TabsTrigger value="overview" className="flex items-center gap-2">
-              <Settings className="w-4 h-4" />
-              <span className="hidden sm:inline">Visão Geral</span>
             </TabsTrigger>
             <TabsTrigger value="report" className="flex items-center gap-2">
               <FileText className="w-4 h-4" />
@@ -147,11 +143,11 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="leaderboard">
-            <Leaderboard tournamentData={tournamentData} />
-          </TabsContent>
-
-          <TabsContent value="overview">
-            <TournamentOverview tournamentData={tournamentData} />
+            <div className="space-y-6">
+              {/* Visão Geral movida para o topo da Classificação */}
+              <TournamentOverview tournamentData={tournamentData} />
+              <Leaderboard tournamentData={tournamentData} />
+            </div>
           </TabsContent>
 
           <TabsContent value="report">
@@ -180,49 +176,55 @@ const TournamentOverview = ({ tournamentData }) => {
   const stats = getMatchStats();
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      <Card className="bg-gray-800 border-gray-700 p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-gray-400">Formato</p>
-            <p className="text-2xl font-bold text-white">{getFormatName(tournamentData.format)}</p>
+    <Card className="bg-gray-800 border-gray-700 p-6 mb-6">
+      <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+        <Trophy className="w-6 h-6 text-blue-400" />
+        Visão Geral do Torneio
+      </h3>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="bg-gray-700 p-4 rounded-lg">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-400">Formato</p>
+              <p className="text-lg font-bold text-white">{getFormatName(tournamentData.format)}</p>
+            </div>
+            <Trophy className="w-6 h-6 text-blue-400" />
           </div>
-          <Trophy className="w-8 h-8 text-blue-400" />
         </div>
-      </Card>
 
-      <Card className="bg-gray-800 border-gray-700 p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-gray-400">Participantes</p>
-            <p className="text-2xl font-bold text-white">{getParticipantCount()}</p>
+        <div className="bg-gray-700 p-4 rounded-lg">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-400">Participantes</p>
+              <p className="text-lg font-bold text-white">{getParticipantCount()}</p>
+            </div>
+            <Users className="w-6 h-6 text-green-400" />
           </div>
-          <Users className="w-8 h-8 text-green-400" />
         </div>
-      </Card>
 
-      <Card className="bg-gray-800 border-gray-700 p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-gray-400">Jogos Concluídos</p>
-            <p className="text-2xl font-bold text-white">{stats.completed} / {stats.total}</p>
+        <div className="bg-gray-700 p-4 rounded-lg">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-400">Jogos Concluídos</p>
+              <p className="text-lg font-bold text-white">{stats.completed} / {stats.total}</p>
+            </div>
+            <Crown className="w-6 h-6 text-yellow-400" />
           </div>
-          <Crown className="w-8 h-8 text-yellow-400" />
         </div>
-      </Card>
 
-      <Card className="bg-gray-800 border-gray-700 p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-gray-400">Progresso</p>
-            <p className="text-2xl font-bold text-white">
-              {stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0}%
-            </p>
+        <div className="bg-gray-700 p-4 rounded-lg">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-400">Progresso</p>
+              <p className="text-lg font-bold text-white">
+                {stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0}%
+              </p>
+            </div>
+            <FileText className="w-6 h-6 text-purple-400" />
           </div>
-          <FileText className="w-8 h-8 text-purple-400" />
         </div>
-      </Card>
-    </div>
+      </div>
+    </Card>
   );
 };
 

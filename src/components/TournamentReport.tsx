@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { FileText, Download, Trophy, Users, Target, Printer, Medal } from 'lucide-react';
+import { FileText, Download, Trophy, Users, Target, Printer, Medal, Crown } from 'lucide-react';
 
 interface TournamentReportProps {
   tournamentData: any;
@@ -12,8 +12,6 @@ interface TournamentReportProps {
 
 const TournamentReport = ({ tournamentData }: TournamentReportProps) => {
   const generatePDF = () => {
-    // This would integrate with jsPDF to generate a comprehensive report
-    // For now, we'll create a simple print-friendly version
     window.print();
   };
 
@@ -72,7 +70,7 @@ const TournamentReport = ({ tournamentData }: TournamentReportProps) => {
 
   const getAllMatches = () => {
     const matches = tournamentData.matches || [];
-    return matches.filter(m => m.winnerId); // Only completed matches
+    return matches.filter(m => m.winnerId);
   };
 
   const stats = getStatistics();
@@ -81,7 +79,25 @@ const TournamentReport = ({ tournamentData }: TournamentReportProps) => {
 
   return (
     <div className="space-y-8 print:space-y-6">
-      {/* Header with Action Buttons */}
+      {/* Header com título maior e data */}
+      <div className="text-center print:mb-8">
+        <h1 className="text-4xl print:text-5xl font-bold text-white print:text-black mb-2">
+          {tournamentData.name}
+        </h1>
+        <h2 className="text-2xl print:text-3xl font-semibold text-gray-300 print:text-gray-700 mb-4">
+          RELATÓRIO FINAL DO TORNEIO
+        </h2>
+        <div className="text-lg print:text-xl text-gray-400 print:text-gray-600">
+          <p>Formato: {getFormatName(tournamentData.format)}</p>
+          <p>Data: {new Date(tournamentData.createdAt).toLocaleDateString('pt-BR', { 
+            day: '2-digit', 
+            month: 'long', 
+            year: 'numeric' 
+          })}</p>
+        </div>
+      </div>
+
+      {/* Action Buttons */}
       <Card className="bg-gray-800 border-gray-700 p-6 print:hidden">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <h2 className="text-2xl font-bold text-white flex items-center gap-2">
@@ -107,92 +123,35 @@ const TournamentReport = ({ tournamentData }: TournamentReportProps) => {
         </div>
       </Card>
 
-      {/* Tournament Summary - Expanded */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="bg-gray-800 border-gray-700 p-6 print:bg-white print:border-gray-300">
-          <div className="flex items-center gap-3 mb-4">
-            <Trophy className="w-6 h-6 text-yellow-400" />
-            <h3 className="text-xl font-semibold text-white print:text-black">Informações Gerais</h3>
-          </div>
-          <div className="space-y-3">
-            <div className="flex justify-between items-center py-2 border-b border-gray-600 print:border-gray-300">
-              <span className="text-gray-400 print:text-gray-700">Nome do Torneio:</span>
-              <span className="text-white font-medium print:text-black">{tournamentData.name}</span>
-            </div>
-            <div className="flex justify-between items-center py-2 border-b border-gray-600 print:border-gray-300">
-              <span className="text-gray-400 print:text-gray-700">Formato:</span>
-              <span className="text-white font-medium print:text-black">{getFormatName(tournamentData.format)}</span>
-            </div>
-            <div className="flex justify-between items-center py-2 border-b border-gray-600 print:border-gray-300">
-              <span className="text-gray-400 print:text-gray-700">Status:</span>
-              <Badge variant={tournamentData.status === 'finished' ? 'default' : 'secondary'} className="print:border print:border-gray-400">
-                {getStatusName(tournamentData.status)}
-              </Badge>
-            </div>
-            <div className="flex justify-between items-center py-2">
-              <span className="text-gray-400 print:text-gray-700">Data de Criação:</span>
-              <span className="text-white font-medium print:text-black">
-                {new Date(tournamentData.createdAt).toLocaleDateString('pt-BR')}
-              </span>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="bg-gray-800 border-gray-700 p-6 print:bg-white print:border-gray-300">
-          <div className="flex items-center gap-3 mb-4">
-            <Target className="w-6 h-6 text-green-400" />
-            <h3 className="text-xl font-semibold text-white print:text-black">Estatísticas Gerais</h3>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-white print:text-black">{stats.totalParticipants}</div>
-              <div className="text-sm text-gray-400 print:text-gray-700">Participantes</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-white print:text-black">{stats.completedMatches}/{stats.totalMatches}</div>
-              <div className="text-sm text-gray-400 print:text-gray-700">Jogos Realizados</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-white print:text-black">{stats.totalPoints}</div>
-              <div className="text-sm text-gray-400 print:text-gray-700">Total de Pontos</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-white print:text-black">{stats.averagePointsPerMatch}</div>
-              <div className="text-sm text-gray-400 print:text-gray-700">Média por Jogo</div>
-            </div>
-          </div>
-        </Card>
-      </div>
-
-      {/* Final Standings Table */}
-      <Card className="bg-gray-800 border-gray-700 p-6 print:bg-white print:border-gray-300">
+      {/* Classificação Final - Destaque Principal */}
+      <Card className="bg-gray-800 border-gray-700 p-8 print:bg-white print:border-gray-300">
         <div className="flex items-center gap-3 mb-6">
-          <Medal className="w-6 h-6 text-yellow-400" />
-          <h3 className="text-xl font-bold text-white print:text-black">Classificação Final</h3>
+          <Crown className="w-8 h-8 text-yellow-400" />
+          <h3 className="text-3xl print:text-4xl font-bold text-white print:text-black">Classificação Final</h3>
         </div>
         
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow className="border-gray-600 print:border-gray-300">
-                <TableHead className="text-gray-300 print:text-gray-700 w-16">Pos.</TableHead>
-                <TableHead className="text-gray-300 print:text-gray-700">Nome</TableHead>
-                <TableHead className="text-gray-300 print:text-gray-700 text-center">Jogos</TableHead>
-                <TableHead className="text-gray-300 print:text-gray-700 text-center">Vitórias</TableHead>
-                <TableHead className="text-gray-300 print:text-gray-700 text-center">Pontos Pró</TableHead>
-                <TableHead className="text-gray-300 print:text-gray-700 text-center">Pontos Contra</TableHead>
-                <TableHead className="text-gray-300 print:text-gray-700 text-center">Saldo</TableHead>
-                <TableHead className="text-gray-300 print:text-gray-700 text-center">Aproveitamento</TableHead>
+                <TableHead className="text-gray-300 print:text-gray-700 w-20 text-lg print:text-xl">Pos.</TableHead>
+                <TableHead className="text-gray-300 print:text-gray-700 text-lg print:text-xl">Nome</TableHead>
+                <TableHead className="text-gray-300 print:text-gray-700 text-center text-lg print:text-xl">Jogos</TableHead>
+                <TableHead className="text-gray-300 print:text-gray-700 text-center text-lg print:text-xl">Vitórias</TableHead>
+                <TableHead className="text-gray-300 print:text-gray-700 text-center text-lg print:text-xl">Pontos Pró</TableHead>
+                <TableHead className="text-gray-300 print:text-gray-700 text-center text-lg print:text-xl">Pontos Contra</TableHead>
+                <TableHead className="text-gray-300 print:text-gray-700 text-center text-lg print:text-xl">Saldo</TableHead>
+                <TableHead className="text-gray-300 print:text-gray-700 text-center text-lg print:text-xl">Aproveitamento</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {finalStandings.map((participant) => (
                 <TableRow key={participant.id} className="border-gray-600 print:border-gray-300">
-                  <TableCell className="font-bold text-white print:text-black">
-                    <div className="flex items-center gap-2">
-                      {participant.position}
+                  <TableCell className="font-bold text-white print:text-black text-lg print:text-xl">
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl print:text-3xl">{participant.position}º</span>
                       {participant.position <= 3 && (
-                        <div className={`w-4 h-4 rounded-full ${
+                        <div className={`w-6 h-6 print:w-8 print:h-8 rounded-full ${
                           participant.position === 1 ? 'bg-yellow-500' : 
                           participant.position === 2 ? 'bg-gray-400' : 'bg-amber-600'
                         }`} />
@@ -201,22 +160,22 @@ const TournamentReport = ({ tournamentData }: TournamentReportProps) => {
                   </TableCell>
                   <TableCell className="text-white print:text-black">
                     <div>
-                      <div className="font-medium">{participant.name}</div>
+                      <div className="font-bold text-lg print:text-xl">{participant.name}</div>
                       {participant.players && (
-                        <div className="text-xs text-gray-400 print:text-gray-600">
+                        <div className="text-sm print:text-base text-gray-400 print:text-gray-600">
                           {participant.players.join(' / ')}
                         </div>
                       )}
                     </div>
                   </TableCell>
-                  <TableCell className="text-center text-white print:text-black">{participant.gamesPlayed || 0}</TableCell>
-                  <TableCell className="text-center text-white print:text-black font-semibold">{participant.wins || 0}</TableCell>
-                  <TableCell className="text-center text-white print:text-black">{participant.pointsFor || 0}</TableCell>
-                  <TableCell className="text-center text-white print:text-black">{participant.pointsAgainst || 0}</TableCell>
-                  <TableCell className={`text-center font-semibold ${participant.pointsDiff >= 0 ? 'text-green-400 print:text-green-700' : 'text-red-400 print:text-red-700'}`}>
+                  <TableCell className="text-center text-white print:text-black text-lg print:text-xl">{participant.gamesPlayed || 0}</TableCell>
+                  <TableCell className="text-center text-white print:text-black font-bold text-lg print:text-xl">{participant.wins || 0}</TableCell>
+                  <TableCell className="text-center text-white print:text-black text-lg print:text-xl">{participant.pointsFor || 0}</TableCell>
+                  <TableCell className="text-center text-white print:text-black text-lg print:text-xl">{participant.pointsAgainst || 0}</TableCell>
+                  <TableCell className={`text-center font-bold text-lg print:text-xl ${participant.pointsDiff >= 0 ? 'text-green-400 print:text-green-700' : 'text-red-400 print:text-red-700'}`}>
                     {participant.pointsDiff >= 0 ? '+' : ''}{participant.pointsDiff}
                   </TableCell>
-                  <TableCell className="text-center text-white print:text-black">{participant.winRate}%</TableCell>
+                  <TableCell className="text-center text-white print:text-black text-lg print:text-xl">{participant.winRate}%</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -224,31 +183,82 @@ const TournamentReport = ({ tournamentData }: TournamentReportProps) => {
         </div>
         
         {finalStandings.length > 0 && (
-          <div className="mt-4 text-sm text-gray-400 print:text-gray-600">
+          <div className="mt-6 text-base print:text-lg text-gray-400 print:text-gray-600">
             <strong>Critérios de Desempate:</strong> 1º Número de vitórias, 2º Saldo de pontos (pontos pró - pontos contra)
           </div>
         )}
       </Card>
 
-      {/* All Matches with Results */}
+      {/* Estatísticas Gerais */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card className="bg-gray-800 border-gray-700 p-6 print:bg-white print:border-gray-300">
+          <div className="flex items-center gap-3 mb-4">
+            <Trophy className="w-6 h-6 text-yellow-400" />
+            <h3 className="text-2xl print:text-3xl font-semibold text-white print:text-black">Informações Gerais</h3>
+          </div>
+          <div className="space-y-4">
+            <div className="flex justify-between items-center py-3 border-b border-gray-600 print:border-gray-300">
+              <span className="text-gray-400 print:text-gray-700 text-lg print:text-xl">Formato:</span>
+              <span className="text-white font-medium print:text-black text-lg print:text-xl">{getFormatName(tournamentData.format)}</span>
+            </div>
+            <div className="flex justify-between items-center py-3 border-b border-gray-600 print:border-gray-300">
+              <span className="text-gray-400 print:text-gray-700 text-lg print:text-xl">Status:</span>
+              <Badge variant={tournamentData.status === 'finished' ? 'default' : 'secondary'} className="print:border print:border-gray-400 text-lg print:text-xl">
+                {getStatusName(tournamentData.status)}
+              </Badge>
+            </div>
+            <div className="flex justify-between items-center py-3">
+              <span className="text-gray-400 print:text-gray-700 text-lg print:text-xl">Participantes:</span>
+              <span className="text-white font-medium print:text-black text-lg print:text-xl">{stats.totalParticipants}</span>
+            </div>
+          </div>
+        </Card>
+
+        <Card className="bg-gray-800 border-gray-700 p-6 print:bg-white print:border-gray-300">
+          <div className="flex items-center gap-3 mb-4">
+            <Target className="w-6 h-6 text-green-400" />
+            <h3 className="text-2xl print:text-3xl font-semibold text-white print:text-black">Estatísticas</h3>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="text-center">
+              <div className="text-3xl print:text-4xl font-bold text-white print:text-black">{stats.completedMatches}/{stats.totalMatches}</div>
+              <div className="text-base print:text-lg text-gray-400 print:text-gray-700">Jogos Realizados</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl print:text-4xl font-bold text-white print:text-black">{stats.totalPoints}</div>
+              <div className="text-base print:text-lg text-gray-400 print:text-gray-700">Total de Pontos</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl print:text-4xl font-bold text-white print:text-black">{stats.averagePointsPerMatch}</div>
+              <div className="text-base print:text-lg text-gray-400 print:text-gray-700">Média por Jogo</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl print:text-4xl font-bold text-white print:text-black">{stats.highestScore}</div>
+              <div className="text-base print:text-lg text-gray-400 print:text-gray-700">Maior Pontuação</div>
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      {/* Histórico de Jogos */}
       {allMatches.length > 0 && (
         <Card className="bg-gray-800 border-gray-700 p-6 print:bg-white print:border-gray-300">
           <div className="flex items-center gap-3 mb-6">
             <Trophy className="w-6 h-6 text-blue-400" />
-            <h3 className="text-xl font-bold text-white print:text-black">Histórico Completo de Jogos</h3>
+            <h3 className="text-2xl print:text-3xl font-bold text-white print:text-black">Histórico Completo de Jogos</h3>
           </div>
           
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow className="border-gray-600 print:border-gray-300">
-                  <TableHead className="text-gray-300 print:text-gray-700 w-16">Jogo</TableHead>
-                  <TableHead className="text-gray-300 print:text-gray-700">Participante 1</TableHead>
-                  <TableHead className="text-gray-300 print:text-gray-700 text-center">Placar</TableHead>
-                  <TableHead className="text-gray-300 print:text-gray-700">Participante 2</TableHead>
-                  <TableHead className="text-gray-300 print:text-gray-700 text-center">Vencedor</TableHead>
+                  <TableHead className="text-gray-300 print:text-gray-700 w-16 text-lg print:text-xl">Jogo</TableHead>
+                  <TableHead className="text-gray-300 print:text-gray-700 text-lg print:text-xl">Participante 1</TableHead>
+                  <TableHead className="text-gray-300 print:text-gray-700 text-center text-lg print:text-xl">Placar</TableHead>
+                  <TableHead className="text-gray-300 print:text-gray-700 text-lg print:text-xl">Participante 2</TableHead>
+                  <TableHead className="text-gray-300 print:text-gray-700 text-center text-lg print:text-xl">Vencedor</TableHead>
                   {allMatches.some(m => m.phase) && (
-                    <TableHead className="text-gray-300 print:text-gray-700 text-center">Fase</TableHead>
+                    <TableHead className="text-gray-300 print:text-gray-700 text-center text-lg print:text-xl">Fase</TableHead>
                   )}
                 </TableRow>
               </TableHeader>
@@ -262,22 +272,22 @@ const TournamentReport = ({ tournamentData }: TournamentReportProps) => {
                   
                   return (
                     <TableRow key={match.id} className="border-gray-600 print:border-gray-300">
-                      <TableCell className="font-medium text-white print:text-black">{index + 1}</TableCell>
-                      <TableCell className={`${isTeam1Winner ? 'font-bold text-green-400 print:text-green-700' : 'text-white print:text-black'}`}>
+                      <TableCell className="font-medium text-white print:text-black text-lg print:text-xl">{index + 1}</TableCell>
+                      <TableCell className={`text-lg print:text-xl ${isTeam1Winner ? 'font-bold text-green-400 print:text-green-700' : 'text-white print:text-black'}`}>
                         {team1Name}
                       </TableCell>
-                      <TableCell className="text-center font-bold text-white print:text-black">
+                      <TableCell className="text-center font-bold text-white print:text-black text-lg print:text-xl">
                         {match.score1} x {match.score2}
                       </TableCell>
-                      <TableCell className={`${!isTeam1Winner ? 'font-bold text-green-400 print:text-green-700' : 'text-white print:text-black'}`}>
+                      <TableCell className={`text-lg print:text-xl ${!isTeam1Winner ? 'font-bold text-green-400 print:text-green-700' : 'text-white print:text-black'}`}>
                         {team2Name}
                       </TableCell>
-                      <TableCell className="text-center text-green-400 print:text-green-700 font-semibold">
+                      <TableCell className="text-center text-green-400 print:text-green-700 font-semibold text-lg print:text-xl">
                         {isTeam1Winner ? team1Name : team2Name}
                       </TableCell>
                       {allMatches.some(m => m.phase) && (
                         <TableCell className="text-center">
-                          <Badge variant="outline" className="text-xs print:border-gray-400">
+                          <Badge variant="outline" className="text-sm print:text-base print:border-gray-400">
                             {match.phase || 'Regular'}
                           </Badge>
                         </TableCell>
@@ -289,14 +299,14 @@ const TournamentReport = ({ tournamentData }: TournamentReportProps) => {
             </Table>
           </div>
           
-          <div className="mt-4 text-sm text-gray-400 print:text-gray-600">
+          <div className="mt-4 text-base print:text-lg text-gray-400 print:text-gray-600">
             Total de jogos realizados: {allMatches.length}
           </div>
         </Card>
       )}
 
       {/* Print Styles */}
-      <style jsx global>{`
+      <style jsx>{`
         @media print {
           body { 
             background: white !important; 
