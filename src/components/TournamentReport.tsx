@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -306,7 +305,7 @@ const TournamentReport = ({ tournamentData }: TournamentReportProps) => {
       )}
 
       {/* Print Styles */}
-      <style jsx>{`
+      <style>{`
         @media print {
           body { 
             background: white !important; 
