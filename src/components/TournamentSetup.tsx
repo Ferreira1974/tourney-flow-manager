@@ -72,11 +72,10 @@ const TournamentSetup = ({ onCreateTournament }: TournamentSetupProps) => {
 
   const handleFormatSelect = (formatId: string) => {
     setSelectedFormat(formatId);
-    // Para Super 8, definir automaticamente o tamanho
     if (formatId === 'super8') {
       setTournamentSize('8');
     } else {
-      setTournamentSize(''); // Reset size quando formato muda
+      setTournamentSize('');
     }
   };
 
@@ -110,9 +109,20 @@ const TournamentSetup = ({ onCreateTournament }: TournamentSetupProps) => {
         <p className="text-gray-400">Escolha o formato e configure seu torneio</p>
       </div>
 
-      {/* Format Selection */}
+      {/* Tournament Name - Moved to top */}
       <div className="mb-8">
-        <h3 className="text-xl font-semibold text-white mb-4">1. Escolha o Formato</h3>
+        <h3 className="text-xl font-semibold text-white mb-4">1. Nome do Torneio</h3>
+        <Input
+          value={tournamentName}
+          onChange={(e) => setTournamentName(e.target.value)}
+          placeholder="Digite o nome do torneio"
+          className="bg-gray-700 border-gray-600 text-white text-lg p-4"
+        />
+      </div>
+
+      {/* Format Selection - Now step 2 */}
+      <div className="mb-8">
+        <h3 className="text-xl font-semibold text-white mb-4">2. Escolha o Formato</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {formats.map((format) => {
             const Icon = format.icon;
@@ -153,46 +163,30 @@ const TournamentSetup = ({ onCreateTournament }: TournamentSetupProps) => {
         </div>
       </div>
 
-      {/* Tournament Details */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">
-            2. Nome do Torneio
-          </label>
-          <Input
-            value={tournamentName}
-            onChange={(e) => setTournamentName(e.target.value)}
-            placeholder="Digite o nome do torneio"
-            className="bg-gray-700 border-gray-600 text-white"
-          />
+      {/* Number of Participants - Now step 3 */}
+      {selectedFormat && (
+        <div className="mb-8">
+          <h3 className="text-xl font-semibold text-white mb-4">3. Número de Participantes</h3>
+          {selectedFormat === 'super8' ? (
+            <div className="bg-gray-600 border border-gray-500 rounded-md px-4 py-3 text-gray-300 text-lg">
+              8 jogadores (fixo)
+            </div>
+          ) : (
+            <Select value={tournamentSize} onValueChange={setTournamentSize}>
+              <SelectTrigger className="bg-gray-700 border-gray-600 text-white text-lg p-4">
+                <SelectValue placeholder="Selecione o tamanho" />
+              </SelectTrigger>
+              <SelectContent className="bg-gray-700 border-gray-600">
+                {getSizeOptions(selectedFormat).map((option) => (
+                  <SelectItem key={option.value} value={option.value} className="text-white">
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
-
-        {selectedFormat && (
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              3. Número de Participantes
-            </label>
-            {selectedFormat === 'super8' ? (
-              <div className="bg-gray-600 border border-gray-500 rounded-md px-3 py-2 text-gray-300">
-                8 jogadores (fixo)
-              </div>
-            ) : (
-              <Select value={tournamentSize} onValueChange={setTournamentSize}>
-                <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
-                  <SelectValue placeholder="Selecione o tamanho" />
-                </SelectTrigger>
-                <SelectContent className="bg-gray-700 border-gray-600">
-                  {getSizeOptions(selectedFormat).map((option) => (
-                    <SelectItem key={option.value} value={option.value} className="text-white">
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          </div>
-        )}
-      </div>
+      )}
 
       {/* Create Button */}
       <div className="text-center">

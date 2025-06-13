@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -109,7 +108,7 @@ const Index = () => {
 
         {/* Main Content */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 bg-gray-800 mb-6">
+          <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 bg-gray-800 mb-6">
             <TabsTrigger value="participants" className="flex items-center gap-2">
               <Users className="w-4 h-4" />
               <span className="hidden sm:inline">Participantes</span>
@@ -144,7 +143,6 @@ const Index = () => {
 
           <TabsContent value="leaderboard">
             <div className="space-y-6">
-              {/* Visão Geral movida para o topo da Classificação */}
               <TournamentOverview tournamentData={tournamentData} />
               <Leaderboard tournamentData={tournamentData} />
             </div>
@@ -206,7 +204,7 @@ const TournamentOverview = ({ tournamentData }) => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-400">Jogos Concluídos</p>
-              <p className="text-lg font-bold text-white">{stats.completed} / {stats.total}</p>
+              <p className="text-lg font-bold text-yellow-400">{stats.completed} / {stats.total}</p>
             </div>
             <Crown className="w-6 h-6 text-yellow-400" />
           </div>
@@ -216,7 +214,7 @@ const TournamentOverview = ({ tournamentData }) => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-400">Progresso</p>
-              <p className="text-lg font-bold text-white">
+              <p className="text-lg font-bold text-green-400">
                 {stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0}%
               </p>
             </div>
