@@ -1,10 +1,8 @@
-
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { FileText, Download, Trophy, Users, Target, Printer, Medal, Crown } from 'lucide-react';
+import { FileText, Download, Trophy, Users, Target, Printer, Crown } from 'lucide-react';
 
 interface TournamentReportProps {
   tournamentData: any;
@@ -240,7 +238,7 @@ const TournamentReport = ({ tournamentData }: TournamentReportProps) => {
         </Card>
       </div>
 
-      {/* Histórico de Jogos */}
+      {/* Histórico de Jogos - Layout Simplificado */}
       {allMatches.length > 0 && (
         <Card className="bg-gray-800 border-gray-700 p-8 print:bg-white print:border-gray-300">
           <div className="flex items-center gap-4 mb-8">
@@ -248,55 +246,27 @@ const TournamentReport = ({ tournamentData }: TournamentReportProps) => {
             <h3 className="text-3xl print:text-4xl font-bold text-white print:text-black">Histórico Completo de Jogos</h3>
           </div>
           
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="border-gray-600 print:border-gray-300">
-                  <TableHead className="text-gray-300 print:text-gray-700 w-20 text-xl print:text-2xl font-bold">Jogo</TableHead>
-                  <TableHead className="text-gray-300 print:text-gray-700 text-xl print:text-2xl font-bold">Participante 1</TableHead>
-                  <TableHead className="text-gray-300 print:text-gray-700 text-center text-xl print:text-2xl font-bold">Placar</TableHead>
-                  <TableHead className="text-gray-300 print:text-gray-700 text-xl print:text-2xl font-bold">Participante 2</TableHead>
-                  <TableHead className="text-gray-300 print:text-gray-700 text-center text-xl print:text-2xl font-bold">Vencedor</TableHead>
-                  {allMatches.some(m => m.phase) && (
-                    <TableHead className="text-gray-300 print:text-gray-700 text-center text-xl print:text-2xl font-bold">Fase</TableHead>
-                  )}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {allMatches.map((match, index) => {
-                  const team1Name = getTeamName(match.teamIds[0], tournamentData);
-                  const team2Name = getTeamName(match.teamIds[1], tournamentData);
-                  const isTeam1Winner = match.winnerId === match.teamIds[0] || 
-                    (Array.isArray(match.teamIds[0]) && Array.isArray(match.winnerId) && 
-                     match.teamIds[0].every(id => match.winnerId.includes(id)));
-                  
-                  return (
-                    <TableRow key={match.id} className="border-gray-600 print:border-gray-300">
-                      <TableCell className="font-medium text-white print:text-black text-xl print:text-2xl">{index + 1}</TableCell>
-                      <TableCell className={`text-xl print:text-2xl ${isTeam1Winner ? 'font-bold text-green-400 print:text-green-700' : 'text-white print:text-black'}`}>
-                        {team1Name}
-                      </TableCell>
-                      <TableCell className="text-center font-bold text-white print:text-black text-xl print:text-2xl">
-                        {match.score1} x {match.score2}
-                      </TableCell>
-                      <TableCell className={`text-xl print:text-2xl ${!isTeam1Winner ? 'font-bold text-green-400 print:text-green-700' : 'text-white print:text-black'}`}>
-                        {team2Name}
-                      </TableCell>
-                      <TableCell className="text-center text-green-400 print:text-green-700 font-semibold text-xl print:text-2xl">
-                        {isTeam1Winner ? team1Name : team2Name}
-                      </TableCell>
-                      {allMatches.some(m => m.phase) && (
-                        <TableCell className="text-center">
-                          <Badge variant="outline" className="text-lg print:text-xl print:border-gray-400 px-3 py-1">
-                            {match.phase || 'Regular'}
-                          </Badge>
-                        </TableCell>
-                      )}
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+          <div className="space-y-4">
+            {allMatches.map((match, index) => {
+              const team1Name = getTeamName(match.teamIds[0], tournamentData);
+              const team2Name = getTeamName(match.teamIds[1], tournamentData);
+              
+              return (
+                <div key={match.id} className="bg-gray-700 print:bg-gray-100 p-6 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div className="text-2xl print:text-3xl font-bold text-white print:text-black">
+                      Jogo {index + 1}
+                    </div>
+                    <div className="text-xl print:text-2xl text-gray-300 print:text-gray-600">
+                      {team1Name} vs {team2Name}
+                    </div>
+                    <div className="text-2xl print:text-3xl font-bold text-white print:text-black">
+                      Resultado: {match.score1} x {match.score2}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
           
           <div className="mt-6 text-lg print:text-xl text-gray-400 print:text-gray-600">

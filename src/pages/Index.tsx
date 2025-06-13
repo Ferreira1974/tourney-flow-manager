@@ -239,7 +239,7 @@ const Index = () => {
 
           <TabsContent value="matches">
             <div className="space-y-6">
-              {/* Game Options Card - Moved from ParticipantManager */}
+              {/* Game Options Card */}
               {tournamentData.matches && tournamentData.matches.length > 0 && (
                 <Card className="bg-gray-800 border-gray-700 p-6">
                   <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
