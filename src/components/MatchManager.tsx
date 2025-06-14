@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -149,6 +150,16 @@ const MatchManager = ({ tournamentData, onUpdate }: MatchManagerProps) => {
       title: "Placar salvo",
       description: "Resultado registrado com sucesso!",
     });
+
+    // Check if all matches are completed to update tournament status to finished
+    const allMatchesCompleted = updatedMatches.every(match => match.winnerId);
+    if (allMatchesCompleted && tournamentData.status !== 'finished') {
+      onUpdate({ status: 'finished' });
+      toast({
+        title: "Torneio finalizado",
+        description: "Todos os jogos foram concluídos! Verifique a classificação final.",
+      });
+    }
   };
 
   const getTeamName = (teamId: any) => {
@@ -174,75 +185,6 @@ const MatchManager = ({ tournamentData, onUpdate }: MatchManagerProps) => {
       'finished': 'Torneio Finalizado'
     };
     return phaseNames[phase] || 'Jogos do Torneio';
-  };
-
-  const isPhaseComplete = () => {
-    return currentPhaseMatches.length > 0 && currentPhaseMatches.every(match => match.winnerId);
-  };
-
-  const handleNextPhase = () => {
-    let nextStatus = '';
-    let updates: any = {};
-    
-    switch (tournamentData.status) {
-      case 'group_stage':
-        if (tournamentData.format === 'doubles_groups') {
-          const qualifiedTeams = getQualifiedTeams(tournamentData, 'group_stage');
-          const playoffMatches = generateMatches({ 
-            ...tournamentData, 
-            teams: qualifiedTeams, 
-            status: 'playoffs' 
-          });
-          updates = { 
-            status: 'playoffs', 
-            matches: [...tournamentData.matches, ...playoffMatches] 
-          };
-          nextStatus = 'playoffs';
-        } else {
-          nextStatus = 'finished';
-          updates = { status: nextStatus };
-        }
-        break;
-      case 'phase1_groups':
-        const phase1Qualified = getQualifiedTeams(tournamentData, 'phase1_groups');
-        const phase2Matches = generateMatches({
-          ...tournamentData,
-          teams: phase1Qualified,
-          status: 'phase2_playoffs'
-        });
-        updates = {
-          status: 'phase2_playoffs',
-          matches: [...tournamentData.matches, ...phase2Matches]
-        };
-        nextStatus = 'phase2_playoffs';
-        break;
-      case 'phase2_playoffs':
-        const phase2Qualified = getQualifiedTeams(tournamentData, 'phase2_playoffs');
-        const phase3Matches = generateMatches({
-          ...tournamentData,
-          teams: phase2Qualified,
-          status: 'phase3_final'
-        });
-        updates = {
-          status: 'phase3_final',
-          matches: [...tournamentData.matches, ...phase3Matches]
-        };
-        nextStatus = 'phase3_final';
-        break;
-      case 'phase3_final':
-      case 'playoffs':
-        nextStatus = 'finished';
-        updates = { status: nextStatus };
-        break;
-    }
-
-    if (nextStatus) {
-      onUpdate(updates);
-      toast({
-        title: nextStatus === 'finished' ? "Torneio finalizado" : "Próxima fase iniciada",
-        description: nextStatus === 'finished' ? "Parabéns! O torneio foi concluído." : "A próxima fase foi iniciada.",
-      });
-    }
   };
 
   if (matches.length === 0) {
@@ -336,21 +278,6 @@ const MatchManager = ({ tournamentData, onUpdate }: MatchManagerProps) => {
             </Card>
           ))}
         </div>
-
-        {isPhaseComplete() && tournamentData.status !== 'finished' && (
-          <div className="mt-6 text-center">
-            <Button
-              onClick={handleNextPhase}
-              size="lg"
-              className="bg-green-600 hover:bg-green-700 font-bold"
-            >
-              {tournamentData.status === 'phase3_final' || tournamentData.status === 'playoffs'
-                ? 'Finalizar Torneio' 
-                : 'Iniciar Próxima Fase'
-              }
-            </Button>
-          </div>
-        )}
       </Card>
     </div>
   );
