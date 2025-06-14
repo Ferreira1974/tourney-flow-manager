@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -92,7 +91,7 @@ const TournamentReport = ({ tournamentData }: TournamentReportProps) => {
   }
 
   return (
-    <div className="space-y-4 print:space-y-3 print:bg-white max-w-full overflow-hidden">
+    <div className="space-y-3 print:space-y-2 print:bg-white max-w-full overflow-hidden">
       {/* Print Controls */}
       <Card className="bg-gray-800 border-gray-700 p-4 print:hidden">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -120,14 +119,14 @@ const TournamentReport = ({ tournamentData }: TournamentReportProps) => {
       </Card>
 
       {/* Header with tournament title */}
-      <div className="text-center print:mb-6 mb-4">
-        <h1 className="text-2xl print:text-4xl font-bold text-white print:text-black mb-2">
+      <div className="text-center print:mb-4 mb-3">
+        <h1 className="text-2xl print:text-3xl font-bold text-white print:text-black mb-1">
           {tournamentData.name}
         </h1>
-        <h2 className="text-lg print:text-2xl font-semibold text-gray-300 print:text-gray-700 mb-3">
+        <h2 className="text-lg print:text-xl font-semibold text-gray-300 print:text-gray-700 mb-2">
           RELATÓRIO FINAL DO TORNEIO
         </h2>
-        <div className="text-sm print:text-base text-gray-400 print:text-gray-600">
+        <div className="text-sm print:text-sm text-gray-400 print:text-gray-600">
           <p className="mb-1">Formato: {getFormatName(tournamentData.format)}</p>
           <p>Data: {new Date(tournamentData.createdAt || Date.now()).toLocaleDateString('pt-BR', { 
             day: '2-digit', 
@@ -138,43 +137,43 @@ const TournamentReport = ({ tournamentData }: TournamentReportProps) => {
       </div>
 
       {/* Final Standings */}
-      <Card className="bg-gray-800 border-gray-700 p-4 print:bg-white print:border-gray-300 print:shadow-none">
-        <div className="flex items-center gap-3 mb-4">
-          <Crown className="w-5 h-5 print:w-6 print:h-6 text-yellow-400 print:text-yellow-600" />
-          <h3 className="text-base print:text-xl font-bold text-white print:text-black">Classificação Final</h3>
+      <Card className="bg-gray-800 border-gray-700 p-3 print:bg-white print:border-gray-300 print:shadow-none">
+        <div className="flex items-center gap-3 mb-3">
+          <Crown className="w-5 h-5 text-yellow-400 print:text-yellow-600" />
+          <h3 className="text-base print:text-lg font-bold text-white print:text-black">Classificação Final</h3>
         </div>
         
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow className="border-gray-600 print:border-gray-300">
-                <TableHead className="text-gray-300 print:text-gray-700 w-16 text-xs print:text-sm font-bold p-2">Pos.</TableHead>
-                <TableHead className="text-gray-300 print:text-gray-700 text-xs print:text-sm font-bold p-2">Nome</TableHead>
-                <TableHead className="text-gray-300 print:text-gray-700 text-center text-xs print:text-sm font-bold p-2">Jogos</TableHead>
-                <TableHead className="text-gray-300 print:text-gray-700 text-center text-xs print:text-sm font-bold p-2">Vitórias</TableHead>
-                <TableHead className="text-gray-300 print:text-gray-700 text-center text-xs print:text-sm font-bold p-2">Pontos Pró</TableHead>
-                <TableHead className="text-gray-300 print:text-gray-700 text-center text-xs print:text-sm font-bold p-2">Pontos Contra</TableHead>
-                <TableHead className="text-gray-300 print:text-gray-700 text-center text-xs print:text-sm font-bold p-2">Saldo</TableHead>
-                <TableHead className="text-gray-300 print:text-gray-700 text-center text-xs print:text-sm font-bold p-2">Aproveitamento</TableHead>
+                <TableHead className="text-gray-300 print:text-gray-700 w-12 text-xs font-bold p-1">Pos.</TableHead>
+                <TableHead className="text-gray-300 print:text-gray-700 text-xs font-bold p-1">Nome</TableHead>
+                <TableHead className="text-gray-300 print:text-gray-700 text-center text-xs font-bold p-1">Jogos</TableHead>
+                <TableHead className="text-gray-300 print:text-gray-700 text-center text-xs font-bold p-1">Vitórias</TableHead>
+                <TableHead className="text-gray-300 print:text-gray-700 text-center text-xs font-bold p-1">Pontos Pró</TableHead>
+                <TableHead className="text-gray-300 print:text-gray-700 text-center text-xs font-bold p-1">Pontos Contra</TableHead>
+                <TableHead className="text-gray-300 print:text-gray-700 text-center text-xs font-bold p-1">Saldo</TableHead>
+                <TableHead className="text-gray-300 print:text-gray-700 text-center text-xs font-bold p-1">Aproveitamento</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {finalStandings.map((participant) => (
                 <TableRow key={participant.id} className="border-gray-600 print:border-gray-300">
-                  <TableCell className="font-bold text-white print:text-black text-xs print:text-sm p-2">
+                  <TableCell className="font-bold text-white print:text-black text-xs p-1">
                     <div className="flex items-center gap-1">
-                      <span className="text-sm print:text-base">{participant.position}º</span>
+                      <span className="text-xs">{participant.position}º</span>
                       {participant.position <= 3 && (
-                        <div className={`w-3 h-3 print:w-4 print:h-4 rounded-full ${
+                        <div className={`w-2 h-2 rounded-full ${
                           participant.position === 1 ? 'bg-yellow-500' : 
                           participant.position === 2 ? 'bg-gray-400' : 'bg-amber-600'
                         }`} />
                       )}
                     </div>
                   </TableCell>
-                  <TableCell className="text-white print:text-black p-2">
+                  <TableCell className="text-white print:text-black p-1">
                     <div>
-                      <div className="font-bold text-xs print:text-sm">{participant.name}</div>
+                      <div className="font-bold text-xs">{participant.name}</div>
                       {participant.players && (
                         <div className="text-xs text-gray-400 print:text-gray-600">
                           {participant.players.join(' / ')}
@@ -182,14 +181,14 @@ const TournamentReport = ({ tournamentData }: TournamentReportProps) => {
                       )}
                     </div>
                   </TableCell>
-                  <TableCell className="text-center text-white print:text-black text-xs print:text-sm p-2">{participant.gamesPlayed || 0}</TableCell>
-                  <TableCell className="text-center text-white print:text-black font-bold text-xs print:text-sm p-2">{participant.wins || 0}</TableCell>
-                  <TableCell className="text-center text-white print:text-black text-xs print:text-sm p-2">{participant.pointsFor || 0}</TableCell>
-                  <TableCell className="text-center text-white print:text-black text-xs print:text-sm p-2">{participant.pointsAgainst || 0}</TableCell>
-                  <TableCell className={`text-center font-bold text-xs print:text-sm p-2 ${participant.pointsDiff >= 0 ? 'text-green-400 print:text-green-700' : 'text-red-400 print:text-red-700'}`}>
+                  <TableCell className="text-center text-white print:text-black text-xs p-1">{participant.gamesPlayed || 0}</TableCell>
+                  <TableCell className="text-center text-white print:text-black font-bold text-xs p-1">{participant.wins || 0}</TableCell>
+                  <TableCell className="text-center text-white print:text-black text-xs p-1">{participant.pointsFor || 0}</TableCell>
+                  <TableCell className="text-center text-white print:text-black text-xs p-1">{participant.pointsAgainst || 0}</TableCell>
+                  <TableCell className={`text-center font-bold text-xs p-1 ${participant.pointsDiff >= 0 ? 'text-green-400 print:text-green-700' : 'text-red-400 print:text-red-700'}`}>
                     {participant.pointsDiff >= 0 ? '+' : ''}{participant.pointsDiff}
                   </TableCell>
-                  <TableCell className="text-center text-white print:text-black text-xs print:text-sm p-2">{participant.winRate}%</TableCell>
+                  <TableCell className="text-center text-white print:text-black text-xs p-1">{participant.winRate}%</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -197,7 +196,7 @@ const TournamentReport = ({ tournamentData }: TournamentReportProps) => {
         </div>
         
         {finalStandings.length > 0 && (
-          <div className="mt-3 text-xs print:text-sm text-gray-400 print:text-gray-600">
+          <div className="mt-2 text-xs text-gray-400 print:text-gray-600">
             <strong>Critérios de Desempate:</strong> 1º Número de vitórias, 2º Saldo de pontos (pontos pró - pontos contra)
           </div>
         )}
@@ -205,30 +204,30 @@ const TournamentReport = ({ tournamentData }: TournamentReportProps) => {
 
       {/* Match Results */}
       {allMatches.length > 0 && (
-        <Card className="bg-gray-800 border-gray-700 p-4 print:bg-white print:border-gray-300 print:shadow-none">
-          <div className="flex items-center gap-3 mb-4">
-            <Trophy className="w-5 h-5 print:w-6 print:h-6 text-blue-400 print:text-blue-600" />
-            <h3 className="text-base print:text-xl font-bold text-white print:text-black">Resultados dos Jogos</h3>
+        <Card className="bg-gray-800 border-gray-700 p-3 print:bg-white print:border-gray-300 print:shadow-none">
+          <div className="flex items-center gap-3 mb-3">
+            <Trophy className="w-5 h-5 text-blue-400 print:text-blue-600" />
+            <h3 className="text-base print:text-lg font-bold text-white print:text-black">Resultados dos Jogos</h3>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             {allMatches.map((match, index) => {
               const team1Name = getTeamName(match.teamIds[0], tournamentData);
               const team2Name = getTeamName(match.teamIds[1], tournamentData);
               
               return (
-                <div key={match.id} className="flex items-center justify-between bg-gray-700 print:bg-gray-50 p-2 print:p-3 rounded-lg border print:border-gray-200">
-                  <div className="text-sm print:text-base font-semibold text-blue-400 print:text-blue-600 min-w-[60px]">
+                <div key={match.id} className="flex items-center justify-between bg-gray-700 print:bg-gray-50 p-2 rounded-lg border print:border-gray-200">
+                  <div className="text-sm font-semibold text-blue-400 print:text-blue-600 min-w-[50px]">
                     Jogo {index + 1}
                   </div>
                   <div className="flex-1 text-center px-2">
-                    <div className="text-xs print:text-sm text-white print:text-black">
+                    <div className="text-xs text-white print:text-black">
                       <span className="font-medium">{team1Name}</span>
                       <span className="text-gray-400 print:text-gray-600 mx-1">vs</span>
                       <span className="font-medium">{team2Name}</span>
                     </div>
                   </div>
-                  <div className="text-sm print:text-base font-bold text-white print:text-black min-w-[60px] text-right">
+                  <div className="text-sm font-bold text-white print:text-black min-w-[50px] text-right">
                     {match.score1} x {match.score2}
                   </div>
                 </div>
@@ -236,35 +235,35 @@ const TournamentReport = ({ tournamentData }: TournamentReportProps) => {
             })}
           </div>
           
-          <div className="mt-3 text-xs print:text-sm text-gray-400 print:text-gray-600">
+          <div className="mt-2 text-xs text-gray-400 print:text-gray-600">
             <strong>Total de jogos realizados:</strong> {allMatches.length}
           </div>
         </Card>
       )}
 
       {/* Tournament Statistics */}
-      <Card className="bg-gray-800 border-gray-700 p-4 print:bg-white print:border-gray-300 print:shadow-none">
-        <div className="flex items-center gap-3 mb-4">
-          <Target className="w-5 h-5 print:w-6 print:h-6 text-green-400 print:text-green-600" />
-          <h3 className="text-base print:text-xl font-bold text-white print:text-black">Estatísticas do Torneio</h3>
+      <Card className="bg-gray-800 border-gray-700 p-3 print:bg-white print:border-gray-300 print:shadow-none">
+        <div className="flex items-center gap-3 mb-3">
+          <Target className="w-5 h-5 text-green-400 print:text-green-600" />
+          <h3 className="text-base print:text-lg font-bold text-white print:text-black">Estatísticas do Torneio</h3>
         </div>
         
-        <div className="grid grid-cols-2 md:grid-cols-4 print:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <div className="text-center">
-            <div className="text-xl print:text-2xl font-bold text-white print:text-black">{stats.totalParticipants}</div>
-            <div className="text-xs print:text-sm text-gray-400 print:text-gray-700 mt-1">Participantes</div>
+            <div className="text-lg print:text-xl font-bold text-white print:text-black">{stats.totalParticipants}</div>
+            <div className="text-xs text-gray-400 print:text-gray-700 mt-1">Participantes</div>
           </div>
           <div className="text-center">
-            <div className="text-xl print:text-2xl font-bold text-white print:text-black">{stats.completedMatches}</div>
-            <div className="text-xs print:text-sm text-gray-400 print:text-gray-700 mt-1">Jogos Realizados</div>
+            <div className="text-lg print:text-xl font-bold text-white print:text-black">{stats.completedMatches}</div>
+            <div className="text-xs text-gray-400 print:text-gray-700 mt-1">Jogos Realizados</div>
           </div>
           <div className="text-center">
-            <div className="text-xl print:text-2xl font-bold text-white print:text-black">{stats.totalPoints}</div>
-            <div className="text-xs print:text-sm text-gray-400 print:text-gray-700 mt-1">Total de Pontos</div>
+            <div className="text-lg print:text-xl font-bold text-white print:text-black">{stats.totalPoints}</div>
+            <div className="text-xs text-gray-400 print:text-gray-700 mt-1">Total de Pontos</div>
           </div>
           <div className="text-center">
-            <div className="text-xl print:text-2xl font-bold text-white print:text-black">{stats.highestScore}</div>
-            <div className="text-xs print:text-sm text-gray-400 print:text-gray-700 mt-1">Maior Pontuação</div>
+            <div className="text-lg print:text-xl font-bold text-white print:text-black">{stats.highestScore}</div>
+            <div className="text-xs text-gray-400 print:text-gray-700 mt-1">Maior Pontuação</div>
           </div>
         </div>
       </Card>
