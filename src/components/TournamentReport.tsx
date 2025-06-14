@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -92,7 +93,7 @@ const TournamentReport = ({ tournamentData }: TournamentReportProps) => {
 
   return (
     <div className="space-y-3 print:space-y-2 print:bg-white max-w-full overflow-hidden">
-      {/* Print Controls */}
+      {/* Print Controls - Hidden on print */}
       <Card className="bg-gray-800 border-gray-700 p-4 print:hidden">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <h2 className="text-xl font-bold text-white flex items-center gap-2">
@@ -201,6 +202,33 @@ const TournamentReport = ({ tournamentData }: TournamentReportProps) => {
         )}
       </Card>
 
+      {/* Tournament Statistics */}
+      <Card className="bg-gray-800 border-gray-700 p-3 print:bg-white print:border-gray-300 print:shadow-none">
+        <div className="flex items-center gap-3 mb-3">
+          <Target className="w-5 h-5 text-green-400 print:text-green-600" />
+          <h3 className="text-base print:text-lg font-bold text-white print:text-black">Estatísticas do Torneio</h3>
+        </div>
+        
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="text-center">
+            <div className="text-lg print:text-xl font-bold text-white print:text-black">{stats.totalParticipants}</div>
+            <div className="text-xs text-gray-400 print:text-gray-700 mt-1">Participantes</div>
+          </div>
+          <div className="text-center">
+            <div className="text-lg print:text-xl font-bold text-white print:text-black">{stats.completedMatches}</div>
+            <div className="text-xs text-gray-400 print:text-gray-700 mt-1">Jogos Realizados</div>
+          </div>
+          <div className="text-center">
+            <div className="text-lg print:text-xl font-bold text-white print:text-black">{stats.totalPoints}</div>
+            <div className="text-xs text-gray-400 print:text-gray-700 mt-1">Total de Pontos</div>
+          </div>
+          <div className="text-center">
+            <div className="text-lg print:text-xl font-bold text-white print:text-black">{stats.highestScore}</div>
+            <div className="text-xs text-gray-400 print:text-gray-700 mt-1">Maior Pontuação</div>
+          </div>
+        </div>
+      </Card>
+
       {/* Match Results */}
       {allMatches.length > 0 && (
         <Card className="bg-gray-800 border-gray-700 p-3 print:bg-white print:border-gray-300 print:shadow-none">
@@ -239,33 +267,6 @@ const TournamentReport = ({ tournamentData }: TournamentReportProps) => {
           </div>
         </Card>
       )}
-
-      {/* Tournament Statistics */}
-      <Card className="bg-gray-800 border-gray-700 p-3 print:bg-white print:border-gray-300 print:shadow-none">
-        <div className="flex items-center gap-3 mb-3">
-          <Target className="w-5 h-5 text-green-400 print:text-green-600" />
-          <h3 className="text-base print:text-lg font-bold text-white print:text-black">Estatísticas do Torneio</h3>
-        </div>
-        
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <div className="text-center">
-            <div className="text-lg print:text-xl font-bold text-white print:text-black">{stats.totalParticipants}</div>
-            <div className="text-xs text-gray-400 print:text-gray-700 mt-1">Participantes</div>
-          </div>
-          <div className="text-center">
-            <div className="text-lg print:text-xl font-bold text-white print:text-black">{stats.completedMatches}</div>
-            <div className="text-xs text-gray-400 print:text-gray-700 mt-1">Jogos Realizados</div>
-          </div>
-          <div className="text-center">
-            <div className="text-lg print:text-xl font-bold text-white print:text-black">{stats.totalPoints}</div>
-            <div className="text-xs text-gray-400 print:text-gray-700 mt-1">Total de Pontos</div>
-          </div>
-          <div className="text-center">
-            <div className="text-lg print:text-xl font-bold text-white print:text-black">{stats.highestScore}</div>
-            <div className="text-xs text-gray-400 print:text-gray-700 mt-1">Maior Pontuação</div>
-          </div>
-        </div>
-      </Card>
     </div>
   );
 };
