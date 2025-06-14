@@ -127,7 +127,6 @@ const TournamentReport = ({ tournamentData }: TournamentReportProps) => {
           RELATÓRIO FINAL DO TORNEIO
         </h2>
         <div className="text-sm print:text-sm text-gray-400 print:text-gray-600">
-          <p className="mb-1">Formato: {getFormatName(tournamentData.format)}</p>
           <p>Data: {new Date(tournamentData.createdAt || Date.now()).toLocaleDateString('pt-BR', { 
             day: '2-digit', 
             month: 'long', 
