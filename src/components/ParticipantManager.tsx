@@ -1,10 +1,10 @@
-
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Users, Plus, Trash2, Edit2, Crown, Shuffle, Play } from 'lucide-react';
 
@@ -18,6 +18,15 @@ const ParticipantManager = ({ tournamentData, onUpdate }: ParticipantManagerProp
   const [player1Name, setPlayer1Name] = useState('');
   const [player2Name, setPlayer2Name] = useState('');
   const [isHeadOfKey, setIsHeadOfKey] = useState(false);
+  
+  // Edit modal states
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editingParticipant, setEditingParticipant] = useState(null);
+  const [editName, setEditName] = useState('');
+  const [editPlayer1, setEditPlayer1] = useState('');
+  const [editPlayer2, setEditPlayer2] = useState('');
+  const [editIsHeadOfKey, setEditIsHeadOfKey] = useState(false);
+  
   const { toast } = useToast();
 
   const isDoublesFormat = tournamentData.format === 'doubles_groups';
@@ -211,15 +220,136 @@ const ParticipantManager = ({ tournamentData, onUpdate }: ParticipantManagerProp
     });
   };
 
+  const handleEditParticipant = (participant: any) => {
+    setEditingParticipant(participant);
+    if (participant.players) {
+      // It's a team
+      setEditPlayer1(participant.players[0] || '');
+      setEditPlayer2(participant.players[1] || '');
+    } else {
+      // It's a player
+      setEditName(participant.name);
+      setEditIsHeadOfKey(participant.isHeadOfKey || false);
+    }
+    setEditModalOpen(true);
+  };
+
+  const handleSaveEdit = () => {
+    if (!editingParticipant) return;
+
+    const isTeam = editingParticipant.players;
+    
+    if (isTeam) {
+      if (!editPlayer1.trim() || !editPlayer2.trim()) {
+        toast({
+          title: "Erro",
+          description: "Preencha os nomes dos dois jogadores.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (editPlayer1.trim().toLowerCase() === editPlayer2.trim().toLowerCase()) {
+        toast({
+          title: "Erro",
+          description: "Os nomes dos jogadores devem ser diferentes.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Check for duplicates excluding current team
+      const otherTeams = (tournamentData.teams || []).filter(t => t.id !== editingParticipant.id);
+      const allPlayersInOtherTeams = otherTeams.flatMap(t => 
+        t.players.map(pl => pl.toLowerCase())
+      );
+
+      if (allPlayersInOtherTeams.includes(editPlayer1.trim().toLowerCase()) || 
+          allPlayersInOtherTeams.includes(editPlayer2.trim().toLowerCase())) {
+        toast({
+          title: "Erro",
+          description: "Um ou ambos os jogadores já estão em outra dupla.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const updatedTeams = (tournamentData.teams || []).map(t => 
+        t.id === editingParticipant.id 
+          ? { 
+              ...t, 
+              name: `${editPlayer1.trim()} / ${editPlayer2.trim()}`,
+              players: [editPlayer1.trim(), editPlayer2.trim()]
+            }
+          : t
+      );
+
+      onUpdate({ teams: updatedTeams });
+      
+      toast({
+        title: "Dupla atualizada",
+        description: "Dupla foi atualizada com sucesso.",
+      });
+    } else {
+      if (!editName.trim()) {
+        toast({
+          title: "Erro",
+          description: "Nome do jogador não pode estar vazio.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Check for duplicates excluding current player
+      const otherPlayers = (tournamentData.players || []).filter(p => p.id !== editingParticipant.id);
+      const isDuplicate = otherPlayers.some(
+        p => p.name.toLowerCase() === editName.trim().toLowerCase()
+      );
+
+      if (isDuplicate) {
+        toast({
+          title: "Erro",
+          description: `O jogador ${editName} já está cadastrado.`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const updatedPlayers = (tournamentData.players || []).map(p => 
+        p.id === editingParticipant.id 
+          ? { ...p, name: editName.trim(), isHeadOfKey: editIsHeadOfKey }
+          : p
+      );
+
+      onUpdate({ players: updatedPlayers });
+      
+      toast({
+        title: "Jogador atualizado",
+        description: "Jogador foi atualizado com sucesso.",
+      });
+    }
+
+    setEditModalOpen(false);
+    setEditingParticipant(null);
+    setEditName('');
+    setEditPlayer1('');
+    setEditPlayer2('');
+    setEditIsHeadOfKey(false);
+  };
+
   const handleDeleteParticipant = (id: string, type: 'player' | 'team') => {
     const key = type === 'team' ? 'teams' : 'players';
     const list = tournamentData[key] || [];
-    onUpdate({ [key]: list.filter(p => p.id !== id) });
+    const participant = list.find(p => p.id === id);
     
-    toast({
-      title: `${type === 'team' ? 'Dupla' : 'Jogador'} removido`,
-      description: "Participante removido com sucesso.",
-    });
+    if (window.confirm(`Tem certeza que deseja excluir ${type === 'team' ? 'a dupla' : 'o jogador'} ${participant?.name || 'este participante'}?`)) {
+      onUpdate({ [key]: list.filter(p => p.id !== id) });
+      
+      toast({
+        title: `${type === 'team' ? 'Dupla' : 'Jogador'} removido`,
+        description: "Participante removido com sucesso.",
+      });
+    }
   };
 
   const canDrawDoubles = (isSuper16 || isKingOfCourt) && isFull && (tournamentData.teams || []).length === 0;
@@ -381,6 +511,14 @@ const ParticipantManager = ({ tournamentData, onUpdate }: ParticipantManagerProp
                     <Button
                       variant="ghost"
                       size="sm"
+                      onClick={() => handleEditParticipant(participant)}
+                      className="text-blue-400 hover:text-blue-300 hover:bg-blue-900/20"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       onClick={() => handleDeleteParticipant(
                         participant.id, 
                         participant.players ? 'team' : 'player'
@@ -400,6 +538,83 @@ const ParticipantManager = ({ tournamentData, onUpdate }: ParticipantManagerProp
           Total: {currentParticipants.length} / {requiredCount}
         </div>
       </Card>
+
+      {/* Edit Modal */}
+      <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
+        <DialogContent className="bg-gray-800 border-gray-700 text-white">
+          <DialogHeader>
+            <DialogTitle className="text-white">
+              Editar {editingParticipant?.players ? 'Dupla' : 'Jogador'}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            {editingParticipant?.players ? (
+              <>
+                <div>
+                  <label className="text-sm text-gray-400 mb-1 block">Jogador 1</label>
+                  <Input
+                    value={editPlayer1}
+                    onChange={(e) => setEditPlayer1(e.target.value)}
+                    placeholder="Nome do Jogador 1"
+                    className="bg-gray-700 border-gray-600 text-white"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm text-gray-400 mb-1 block">Jogador 2</label>
+                  <Input
+                    value={editPlayer2}
+                    onChange={(e) => setEditPlayer2(e.target.value)}
+                    placeholder="Nome do Jogador 2"
+                    className="bg-gray-700 border-gray-600 text-white"
+                  />
+                </div>
+              </>
+            ) : (
+              <>
+                <div>
+                  <label className="text-sm text-gray-400 mb-1 block">Nome do Jogador</label>
+                  <Input
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    placeholder="Nome do Jogador"
+                    className="bg-gray-700 border-gray-600 text-white"
+                  />
+                </div>
+                {(isSuper16 || isKingOfCourt) && (
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="edit-head-of-key"
+                      checked={editIsHeadOfKey}
+                      onCheckedChange={(checked) => setEditIsHeadOfKey(checked === true)}
+                      className="border-yellow-400 data-[state=checked]:bg-yellow-500"
+                    />
+                    <label htmlFor="edit-head-of-key" className="text-sm text-yellow-400 font-medium">
+                      Cabeça de Chave
+                    </label>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+
+          <div className="flex justify-end gap-2 mt-6">
+            <Button
+              variant="outline"
+              onClick={() => setEditModalOpen(false)}
+              className="border-gray-600 text-gray-300 hover:bg-gray-700"
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleSaveEdit}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              Salvar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
