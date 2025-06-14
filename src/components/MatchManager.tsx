@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { Trophy, Play, Check, Clock, FileText } from 'lucide-react';
+import { Trophy, Check, Clock } from 'lucide-react';
 import { generateMatches, getQualifiedTeams } from '@/utils/tournamentLogic';
 
 interface MatchManagerProps {
@@ -140,7 +140,6 @@ const MatchManager = ({ tournamentData, onUpdate }: MatchManagerProps) => {
       onUpdate({ matches: updatedMatches, teams });
     }
 
-    // Clear the scores for this match
     setScores(prev => {
       const newScores = { ...prev };
       delete newScores[matchId];
@@ -155,7 +154,6 @@ const MatchManager = ({ tournamentData, onUpdate }: MatchManagerProps) => {
 
   const getTeamName = (teamId: any) => {
     if (Array.isArray(teamId)) {
-      // For Super 8 format where teamId is an array of player IDs
       const playerNames = teamId.map(playerId => {
         const player = (tournamentData.players || []).find(p => p.id === playerId);
         return player ? player.name : 'Jogador';
@@ -174,10 +172,9 @@ const MatchManager = ({ tournamentData, onUpdate }: MatchManagerProps) => {
       'phase2_playoffs': 'Fase 2 - Playoffs',  
       'phase3_final': 'Fase 3 - Final',
       'playoffs': 'Playoffs',
-      'playing': 'Jogos do Torneio',
       'finished': 'Torneio Finalizado'
     };
-    return phaseNames[phase] || phase;
+    return phaseNames[phase] || 'Jogos do Torneio';
   };
 
   const isPhaseComplete = () => {
@@ -208,7 +205,6 @@ const MatchManager = ({ tournamentData, onUpdate }: MatchManagerProps) => {
         }
         break;
       case 'phase1_groups':
-        // Get top 2 from each group (8 teams total)
         const phase1Qualified = getQualifiedTeams(tournamentData, 'phase1_groups');
         const phase2Matches = generateMatches({
           ...tournamentData,
@@ -222,7 +218,6 @@ const MatchManager = ({ tournamentData, onUpdate }: MatchManagerProps) => {
         nextStatus = 'phase2_playoffs';
         break;
       case 'phase2_playoffs':
-        // Get top 2 from each group (4 teams total) 
         const phase2Qualified = getQualifiedTeams(tournamentData, 'phase2_playoffs');
         const phase3Matches = generateMatches({
           ...tournamentData,
@@ -236,7 +231,6 @@ const MatchManager = ({ tournamentData, onUpdate }: MatchManagerProps) => {
         nextStatus = 'phase3_final';
         break;
       case 'phase3_final':
-      case 'playing':
       case 'playoffs':
         nextStatus = 'finished';
         updates = { status: nextStatus };
@@ -272,42 +266,54 @@ const MatchManager = ({ tournamentData, onUpdate }: MatchManagerProps) => {
             <Trophy className="w-6 h-6" />
             {getPhaseTitle(tournamentData.status)}
           </h2>
-          <Badge variant="outline" className="text-lg px-3 py-1">
+          <Badge className="bg-blue-600 text-white text-lg px-4 py-2 border-2 border-blue-400">
             {currentPhaseMatches.filter(m => m.winnerId).length} / {currentPhaseMatches.length} concluídos
           </Badge>
         </div>
 
         <div className="space-y-4">
-          {currentPhaseMatches.map((match) => (
-            <div key={match.id} className="bg-gray-700 rounded-lg p-4">
+          {currentPhaseMatches.map((match, index) => (
+            <div key={match.id} className="bg-gray-700 rounded-lg p-6">
               <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-4 flex-1">
+                <div className="flex items-center gap-6 flex-1">
+                  <div className="text-blue-400 font-bold text-xl min-w-[80px]">
+                    Jogo {index + 1}
+                  </div>
                   <div className="text-center flex-1">
-                    <div className="text-white font-medium">
+                    <div className="text-white font-medium text-lg">
                       {getTeamName(match.teamIds[0])}
                     </div>
                   </div>
-                  <div className="text-gray-400 text-sm">vs</div>
+                  <div className="text-gray-400 text-lg font-bold">vs</div>
                   <div className="text-center flex-1">
-                    <div className="text-white font-medium">
+                    <div className="text-white font-medium text-lg">
                       {getTeamName(match.teamIds[1])}
                     </div>
+                  </div>
+                  <div className="text-gray-400 text-lg font-bold min-w-[100px]">
+                    Resultado:
+                  </div>
+                  <div className="min-w-[120px]">
+                    {match.winnerId ? (
+                      <div className="text-white font-bold text-xl">
+                        {match.score1} x {match.score2}
+                      </div>
+                    ) : (
+                      <div className="text-gray-400 text-xl">
+                        ___ x ___
+                      </div>
+                    )}
                   </div>
                 </div>
                 
                 <div className="ml-4">
                   {match.winnerId ? (
-                    <div className="flex items-center gap-2">
-                      <Badge className="bg-green-600 text-white">
-                        <Check className="w-3 h-3 mr-1" />
-                        Finalizado
-                      </Badge>
-                      <div className="text-white font-bold">
-                        {match.score1} - {match.score2}
-                      </div>
-                    </div>
+                    <Badge className="bg-green-600 text-white">
+                      <Check className="w-3 h-3 mr-1" />
+                      Finalizado
+                    </Badge>
                   ) : (
-                    <Badge variant="outline" className="text-yellow-400 border-yellow-400">
+                    <Badge className="bg-yellow-600 text-white border-yellow-400">
                       <Clock className="w-3 h-3 mr-1" />
                       Pendente
                     </Badge>
@@ -356,7 +362,7 @@ const MatchManager = ({ tournamentData, onUpdate }: MatchManagerProps) => {
               size="lg"
               className="bg-green-600 hover:bg-green-700 font-bold"
             >
-              {tournamentData.status === 'playing' || tournamentData.status === 'phase3_final' || tournamentData.status === 'playoffs'
+              {tournamentData.status === 'phase3_final' || tournamentData.status === 'playoffs'
                 ? 'Finalizar Torneio' 
                 : 'Iniciar Próxima Fase'
               }

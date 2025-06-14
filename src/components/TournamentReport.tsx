@@ -77,7 +77,6 @@ const TournamentReport = ({ tournamentData }: TournamentReportProps) => {
   const finalStandings = getFinalStandings();
   const allMatches = getAllMatches();
 
-  // Se não há dados do torneio, mostrar mensagem
   if (!tournamentData || !tournamentData.name) {
     return (
       <div className="space-y-8">
@@ -93,17 +92,17 @@ const TournamentReport = ({ tournamentData }: TournamentReportProps) => {
   }
 
   return (
-    <div className="space-y-8 print:space-y-8">
-      {/* Header com título do torneio em destaque */}
-      <div className="text-center print:mb-10">
-        <h1 className="text-6xl print:text-7xl font-bold text-white print:text-black mb-4">
+    <div className="space-y-8 print:space-y-8 print:bg-white">
+      {/* Header with tournament title */}
+      <div className="text-center print:mb-12">
+        <h1 className="text-6xl print:text-8xl font-bold text-white print:text-black mb-6">
           {tournamentData.name}
         </h1>
-        <h2 className="text-4xl print:text-5xl font-semibold text-gray-300 print:text-gray-700 mb-6">
+        <h2 className="text-4xl print:text-6xl font-semibold text-gray-300 print:text-gray-700 mb-8">
           RELATÓRIO FINAL DO TORNEIO
         </h2>
-        <div className="text-2xl print:text-3xl text-gray-400 print:text-gray-600">
-          <p className="mb-2">Formato: {getFormatName(tournamentData.format)}</p>
+        <div className="text-2xl print:text-4xl text-gray-400 print:text-gray-600">
+          <p className="mb-3">Formato: {getFormatName(tournamentData.format)}</p>
           <p>Data: {new Date(tournamentData.createdAt || Date.now()).toLocaleDateString('pt-BR', { 
             day: '2-digit', 
             month: 'long', 
@@ -112,7 +111,7 @@ const TournamentReport = ({ tournamentData }: TournamentReportProps) => {
         </div>
       </div>
 
-      {/* Action Buttons */}
+      {/* Print Controls */}
       <Card className="bg-gray-800 border-gray-700 p-8 print:hidden">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <h2 className="text-3xl font-bold text-white flex items-center gap-2">
@@ -138,7 +137,34 @@ const TournamentReport = ({ tournamentData }: TournamentReportProps) => {
         </div>
       </Card>
 
-      {/* Classificação Final - Destaque Principal */}
+      {/* Tournament Statistics */}
+      <Card className="bg-gray-800 border-gray-700 p-10 print:bg-white print:border-gray-300">
+        <div className="flex items-center gap-4 mb-8">
+          <Target className="w-12 h-12 text-green-400" />
+          <h3 className="text-5xl print:text-6xl font-bold text-white print:text-black">Estatísticas do Torneio</h3>
+        </div>
+        
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+          <div className="text-center">
+            <div className="text-6xl print:text-7xl font-bold text-white print:text-black">{stats.totalParticipants}</div>
+            <div className="text-2xl print:text-3xl text-gray-400 print:text-gray-700 mt-2">Participantes</div>
+          </div>
+          <div className="text-center">
+            <div className="text-6xl print:text-7xl font-bold text-white print:text-black">{stats.completedMatches}</div>
+            <div className="text-2xl print:text-3xl text-gray-400 print:text-gray-700 mt-2">Jogos Realizados</div>
+          </div>
+          <div className="text-center">
+            <div className="text-6xl print:text-7xl font-bold text-white print:text-black">{stats.totalPoints}</div>
+            <div className="text-2xl print:text-3xl text-gray-400 print:text-gray-700 mt-2">Total de Pontos</div>
+          </div>
+          <div className="text-center">
+            <div className="text-6xl print:text-7xl font-bold text-white print:text-black">{stats.highestScore}</div>
+            <div className="text-2xl print:text-3xl text-gray-400 print:text-gray-700 mt-2">Maior Pontuação</div>
+          </div>
+        </div>
+      </Card>
+
+      {/* Final Standings */}
       <Card className="bg-gray-800 border-gray-700 p-10 print:bg-white print:border-gray-300">
         <div className="flex items-center gap-4 mb-8">
           <Crown className="w-12 h-12 text-yellow-400" />
@@ -204,82 +230,31 @@ const TournamentReport = ({ tournamentData }: TournamentReportProps) => {
         )}
       </Card>
 
-      {/* Estatísticas Gerais */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <Card className="bg-gray-800 border-gray-700 p-8 print:bg-white print:border-gray-300">
-          <div className="flex items-center gap-3 mb-6">
-            <Trophy className="w-10 h-10 text-yellow-400" />
-            <h3 className="text-4xl print:text-5xl font-semibold text-white print:text-black">Informações Gerais</h3>
-          </div>
-          <div className="space-y-6">
-            <div className="flex justify-between items-center py-4 border-b border-gray-600 print:border-gray-300">
-              <span className="text-gray-400 print:text-gray-700 text-2xl print:text-3xl">Formato:</span>
-              <span className="text-white font-medium print:text-black text-2xl print:text-3xl">{getFormatName(tournamentData.format)}</span>
-            </div>
-            <div className="flex justify-between items-center py-4 border-b border-gray-600 print:border-gray-300">
-              <span className="text-gray-400 print:text-gray-700 text-2xl print:text-3xl">Status:</span>
-              <Badge variant={tournamentData.status === 'finished' ? 'default' : 'secondary'} className="print:border print:border-gray-400 text-xl print:text-2xl px-4 py-2">
-                {getStatusName(tournamentData.status)}
-              </Badge>
-            </div>
-            <div className="flex justify-between items-center py-4">
-              <span className="text-gray-400 print:text-gray-700 text-2xl print:text-3xl">Participantes:</span>
-              <span className="text-white font-medium print:text-black text-2xl print:text-3xl">{stats.totalParticipants}</span>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="bg-gray-800 border-gray-700 p-8 print:bg-white print:border-gray-300">
-          <div className="flex items-center gap-3 mb-6">
-            <Target className="w-10 h-10 text-green-400" />
-            <h3 className="text-4xl print:text-5xl font-semibold text-white print:text-black">Estatísticas</h3>
-          </div>
-          <div className="grid grid-cols-2 gap-6">
-            <div className="text-center">
-              <div className="text-5xl print:text-6xl font-bold text-white print:text-black">{stats.completedMatches}/{stats.totalMatches}</div>
-              <div className="text-xl print:text-2xl text-gray-400 print:text-gray-700">Jogos Realizados</div>
-            </div>
-            <div className="text-center">
-              <div className="text-5xl print:text-6xl font-bold text-white print:text-black">{stats.totalPoints}</div>
-              <div className="text-xl print:text-2xl text-gray-400 print:text-gray-700">Total de Pontos</div>
-            </div>
-            <div className="text-center">
-              <div className="text-5xl print:text-6xl font-bold text-white print:text-black">{stats.averagePointsPerMatch}</div>
-              <div className="text-xl print:text-2xl text-gray-400 print:text-gray-700">Média por Jogo</div>
-            </div>
-            <div className="text-center">
-              <div className="text-5xl print:text-6xl font-bold text-white print:text-black">{stats.highestScore}</div>
-              <div className="text-xl print:text-2xl text-gray-400 print:text-gray-700">Maior Pontuação</div>
-            </div>
-          </div>
-        </Card>
-      </div>
-
-      {/* Histórico de Jogos */}
+      {/* Match Results */}
       {allMatches.length > 0 && (
-        <Card className="bg-gray-800 border-gray-700 p-8 print:bg-white print:border-gray-300">
+        <Card className="bg-gray-800 border-gray-700 p-10 print:bg-white print:border-gray-300">
           <div className="flex items-center gap-4 mb-8">
-            <Trophy className="w-10 h-10 text-blue-400" />
-            <h3 className="text-4xl print:text-5xl font-bold text-white print:text-black">Histórico Completo de Jogos</h3>
+            <Trophy className="w-12 h-12 text-blue-400" />
+            <h3 className="text-5xl print:text-6xl font-bold text-white print:text-black">Resultados dos Jogos</h3>
           </div>
           
-          <div className="space-y-6">
+          <div className="space-y-4">
             {allMatches.map((match, index) => {
               const team1Name = getTeamName(match.teamIds[0], tournamentData);
               const team2Name = getTeamName(match.teamIds[1], tournamentData);
               
               return (
-                <div key={match.id} className="bg-gray-700 print:bg-gray-100 p-8 rounded-lg">
-                  <div className="flex flex-col space-y-4">
-                    <div className="text-3xl print:text-4xl font-bold text-white print:text-black">
-                      Jogo {index + 1}
+                <div key={match.id} className="flex items-center justify-between bg-gray-700 print:bg-gray-100 p-6 rounded-lg">
+                  <div className="text-3xl print:text-4xl font-bold text-blue-400 print:text-blue-600 min-w-[120px]">
+                    Jogo {index + 1}
+                  </div>
+                  <div className="flex-1 text-center">
+                    <div className="text-2xl print:text-3xl text-white print:text-black">
+                      {team1Name} <span className="text-gray-400 print:text-gray-600 mx-4">vs</span> {team2Name}
                     </div>
-                    <div className="text-2xl print:text-3xl text-gray-300 print:text-gray-600">
-                      {team1Name} vs {team2Name}
-                    </div>
-                    <div className="text-3xl print:text-4xl font-bold text-white print:text-black">
-                      Resultado: {match.score1} x {match.score2}
-                    </div>
+                  </div>
+                  <div className="text-3xl print:text-4xl font-bold text-white print:text-black min-w-[150px] text-right">
+                    {match.score1} x {match.score2}
                   </div>
                 </div>
               );
@@ -287,7 +262,7 @@ const TournamentReport = ({ tournamentData }: TournamentReportProps) => {
           </div>
           
           <div className="mt-8 text-xl print:text-2xl text-gray-400 print:text-gray-600">
-            Total de jogos realizados: {allMatches.length}
+            <strong>Total de jogos realizados:</strong> {allMatches.length}
           </div>
         </Card>
       )}
@@ -304,20 +279,6 @@ const getFormatName = (format: string) => {
     king_of_the_court: 'Rei da Quadra'
   };
   return formats[format] || format;
-};
-
-const getStatusName = (status: string) => {
-  const statuses = {
-    setup: 'Configuração',
-    registration: 'Inscrições',
-    playing: 'Em Andamento',
-    finished: 'Finalizado',
-    group_stage: 'Fase de Grupos',
-    phase1_groups: 'Fase 1',
-    phase2_playoffs: 'Fase 2',
-    phase3_final: 'Final'
-  };
-  return statuses[status] || status;
 };
 
 const getTeamName = (teamId: any, tournamentData: any) => {
