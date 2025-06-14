@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -266,46 +265,44 @@ const MatchManager = ({ tournamentData, onUpdate }: MatchManagerProps) => {
             <Trophy className="w-6 h-6" />
             {getPhaseTitle(tournamentData.status)}
           </h2>
-          <Badge className="bg-blue-600 text-white text-lg px-4 py-2 border-2 border-blue-400">
+          <Badge className="bg-blue-600 text-white text-lg px-4 py-2">
             {currentPhaseMatches.filter(m => m.winnerId).length} / {currentPhaseMatches.length} concluídos
           </Badge>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-3">
           {currentPhaseMatches.map((match, index) => (
-            <div key={match.id} className="bg-gray-700 rounded-lg p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-6 flex-1">
-                  <div className="text-blue-400 font-bold text-xl min-w-[80px]">
-                    Jogo {index + 1}
-                  </div>
-                  <div className="text-center flex-1">
-                    <div className="text-white font-medium text-lg">
-                      {getTeamName(match.teamIds[0])}
-                    </div>
-                  </div>
-                  <div className="text-gray-400 text-lg font-bold">vs</div>
-                  <div className="text-center flex-1">
-                    <div className="text-white font-medium text-lg">
-                      {getTeamName(match.teamIds[1])}
-                    </div>
-                  </div>
-                  <div className="text-gray-400 text-lg font-bold min-w-[100px]">
-                    Resultado:
-                  </div>
-                  <div className="min-w-[120px]">
-                    {match.winnerId ? (
-                      <div className="text-white font-bold text-xl">
-                        {match.score1} x {match.score2}
-                      </div>
-                    ) : (
-                      <div className="text-gray-400 text-xl">
-                        ___ x ___
-                      </div>
-                    )}
-                  </div>
+            <div key={match.id} className="bg-gray-700 rounded-lg p-4">
+              <div className="flex items-center gap-4">
+                {/* Jogo Number */}
+                <div className="text-blue-400 font-bold text-lg min-w-[80px]">
+                  Jogo {index + 1}
                 </div>
                 
+                {/* Team Names */}
+                <div className="flex items-center gap-2 flex-1">
+                  <span className="text-white font-medium">
+                    {getTeamName(match.teamIds[0])}
+                  </span>
+                  <span className="text-gray-400 font-bold">vs</span>
+                  <span className="text-white font-medium">
+                    {getTeamName(match.teamIds[1])}
+                  </span>
+                </div>
+                
+                {/* Result */}
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-400 font-bold">Resultado:</span>
+                  {match.winnerId ? (
+                    <span className="text-white font-bold text-lg">
+                      {match.score1} x {match.score2}
+                    </span>
+                  ) : (
+                    <span className="text-gray-400">_____ x _____</span>
+                  )}
+                </div>
+                
+                {/* Status Badge */}
                 <div className="ml-4">
                   {match.winnerId ? (
                     <Badge className="bg-green-600 text-white">
@@ -313,7 +310,7 @@ const MatchManager = ({ tournamentData, onUpdate }: MatchManagerProps) => {
                       Finalizado
                     </Badge>
                   ) : (
-                    <Badge className="bg-yellow-600 text-white border-yellow-400">
+                    <Badge className="bg-yellow-600 text-white">
                       <Clock className="w-3 h-3 mr-1" />
                       Pendente
                     </Badge>
@@ -322,7 +319,7 @@ const MatchManager = ({ tournamentData, onUpdate }: MatchManagerProps) => {
               </div>
 
               {!match.winnerId && (
-                <div className="flex items-center gap-4 mt-4 p-4 bg-gray-600 rounded">
+                <div className="flex items-center gap-4 mt-4 p-3 bg-gray-600 rounded">
                   <div className="flex items-center gap-2">
                     <Input
                       type="number"
@@ -332,7 +329,7 @@ const MatchManager = ({ tournamentData, onUpdate }: MatchManagerProps) => {
                       onChange={(e) => handleScoreChange(match.id, 'score1', e.target.value)}
                       className="w-16 text-center bg-gray-700 border-gray-500 text-white"
                     />
-                    <span className="text-gray-400">-</span>
+                    <span className="text-gray-400">x</span>
                     <Input
                       type="number"
                       min="0"
