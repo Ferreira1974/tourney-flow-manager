@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -196,6 +197,21 @@ const MatchManager = ({ tournamentData, onUpdate }: MatchManagerProps) => {
           Os jogos aparecerão aqui quando forem gerados na aba de participantes.
         </p>
       </Card>
+    );
+  }
+
+  // Show centered "Tournament Finished" message when tournament is finished
+  if (tournamentData.status === 'finished') {
+    return (
+      <div className="space-y-6">
+        <Card className="bg-gray-800 border-gray-700 p-8 text-center">
+          <Trophy className="w-16 h-16 text-yellow-400 mx-auto mb-4" />
+          <h2 className="text-3xl font-bold text-white mb-2">Torneio Finalizado</h2>
+          <p className="text-gray-400 text-lg">
+            Todos os jogos foram concluídos! Verifique a classificação final na aba "Classificação".
+          </p>
+        </Card>
+      </div>
     );
   }
 

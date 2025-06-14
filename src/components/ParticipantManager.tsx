@@ -506,29 +506,27 @@ const ParticipantManager = ({ tournamentData, onUpdate }: ParticipantManagerProp
                   </div>
                 </div>
 
-                {tournamentData.status === 'registration' && (
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleEditParticipant(participant)}
-                      className="text-blue-400 hover:text-blue-300 hover:bg-blue-900/20"
-                    >
-                      <Edit2 className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDeleteParticipant(
-                        participant.id, 
-                        participant.players ? 'team' : 'player'
-                      )}
-                      className="text-red-400 hover:text-red-300 hover:bg-red-900/20"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                )}
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleEditParticipant(participant)}
+                    className="text-blue-400 hover:text-blue-300 hover:bg-blue-900/20"
+                  >
+                    <Edit2 className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDeleteParticipant(
+                      participant.id, 
+                      participant.players ? 'team' : 'player'
+                    )}
+                    className="text-red-400 hover:text-red-300 hover:bg-red-900/20"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
