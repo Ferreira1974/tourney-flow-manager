@@ -270,85 +270,78 @@ const MatchManager = ({ tournamentData, onUpdate }: MatchManagerProps) => {
           </Badge>
         </div>
 
-        <div className="space-y-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {currentPhaseMatches.map((match, index) => (
-            <div key={match.id} className="bg-gray-700 rounded-lg p-4">
-              <div className="flex items-center gap-4">
-                {/* Jogo Number */}
-                <div className="text-blue-400 font-bold text-lg min-w-[80px]">
-                  Jogo {index + 1}
+            <Card key={match.id} className="bg-gray-700 border-gray-600 p-4">
+              {/* Título do Jogo */}
+              <div className="text-blue-400 font-bold text-lg mb-3">
+                Jogo {index + 1}
+              </div>
+              
+              {/* Times/Jogadores */}
+              <div className="text-center mb-3">
+                <div className="text-white font-medium text-sm">
+                  {getTeamName(match.teamIds[0])}
                 </div>
-                
-                {/* Team Names */}
-                <div className="flex items-center gap-2 flex-1">
-                  <span className="text-white font-medium">
-                    {getTeamName(match.teamIds[0])}
-                  </span>
-                  <span className="text-gray-400 font-bold">vs</span>
-                  <span className="text-white font-medium">
-                    {getTeamName(match.teamIds[1])}
-                  </span>
-                </div>
-                
-                {/* Result */}
-                <div className="flex items-center gap-2">
-                  <span className="text-gray-400 font-bold">Resultado:</span>
-                  {match.winnerId ? (
-                    <span className="text-white font-bold text-lg">
-                      {match.score1} x {match.score2}
-                    </span>
-                  ) : (
-                    <span className="text-gray-400">_____ x _____</span>
-                  )}
-                </div>
-                
-                {/* Status Badge */}
-                <div className="ml-4">
-                  {match.winnerId ? (
-                    <Badge className="bg-green-600 text-white">
-                      <Check className="w-3 h-3 mr-1" />
-                      Finalizado
-                    </Badge>
-                  ) : (
-                    <Badge className="bg-yellow-600 text-white">
-                      <Clock className="w-3 h-3 mr-1" />
-                      Pendente
-                    </Badge>
-                  )}
+                <div className="text-gray-400 font-bold my-1">vs</div>
+                <div className="text-white font-medium text-sm">
+                  {getTeamName(match.teamIds[1])}
                 </div>
               </div>
 
-              {!match.winnerId && (
-                <div className="flex items-center gap-4 mt-4 p-3 bg-gray-600 rounded">
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="number"
-                      min="0"
-                      placeholder="0"
-                      value={scores[match.id]?.score1 || ''}
-                      onChange={(e) => handleScoreChange(match.id, 'score1', e.target.value)}
-                      className="w-16 text-center bg-gray-700 border-gray-500 text-white"
-                    />
-                    <span className="text-gray-400">x</span>
-                    <Input
-                      type="number"
-                      min="0"
-                      placeholder="0"
-                      value={scores[match.id]?.score2 || ''}
-                      onChange={(e) => handleScoreChange(match.id, 'score2', e.target.value)}
-                      className="w-16 text-center bg-gray-700 border-gray-500 text-white"
-                    />
+              {/* Status */}
+              <div className="text-center mb-4">
+                {match.winnerId ? (
+                  <Badge className="bg-green-600 text-white text-xs">
+                    <Check className="w-3 h-3 mr-1" />
+                    Finalizado
+                  </Badge>
+                ) : (
+                  <Badge className="bg-gray-500 text-white text-xs">
+                    Pendente
+                  </Badge>
+                )}
+              </div>
+
+              {/* Resultado */}
+              <div className="border-t border-gray-600 pt-3">
+                <div className="text-sm font-bold text-white mb-2">Resultado:</div>
+                {match.winnerId ? (
+                  <div className="text-center text-lg font-bold text-white">
+                    {match.score1} x {match.score2}
                   </div>
-                  <Button
-                    onClick={() => handleSaveScore(match.id)}
-                    size="sm"
-                    className="bg-blue-600 hover:bg-blue-700"
-                  >
-                    Salvar Resultado
-                  </Button>
-                </div>
-              )}
-            </div>
+                ) : (
+                  <>
+                    <div className="flex items-center justify-center gap-2 mb-3">
+                      <Input
+                        type="number"
+                        min="0"
+                        placeholder="0"
+                        value={scores[match.id]?.score1 || ''}
+                        onChange={(e) => handleScoreChange(match.id, 'score1', e.target.value)}
+                        className="w-16 text-center bg-gray-600 border-gray-500 text-white text-sm"
+                      />
+                      <span className="text-gray-400">x</span>
+                      <Input
+                        type="number"
+                        min="0"
+                        placeholder="0"
+                        value={scores[match.id]?.score2 || ''}
+                        onChange={(e) => handleScoreChange(match.id, 'score2', e.target.value)}
+                        className="w-16 text-center bg-gray-600 border-gray-500 text-white text-sm"
+                      />
+                    </div>
+                    <Button
+                      onClick={() => handleSaveScore(match.id)}
+                      size="sm"
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-xs"
+                    >
+                      Salvar
+                    </Button>
+                  </>
+                )}
+              </div>
+            </Card>
           ))}
         </div>
 
