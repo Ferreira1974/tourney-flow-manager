@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -77,7 +76,8 @@ const Index = () => {
               body { 
                 font-family: Arial, sans-serif; 
                 margin: 20px; 
-                line-height: 1.6;
+                line-height: 1.4;
+                color: #333;
               }
               .header { 
                 text-align: center; 
@@ -85,39 +85,78 @@ const Index = () => {
                 border-bottom: 2px solid #333;
                 padding-bottom: 20px;
               }
+              .header h1 {
+                font-size: 28px;
+                margin: 0 0 10px 0;
+                color: #2563eb;
+              }
+              .header h2 {
+                font-size: 20px;
+                margin: 0 0 15px 0;
+                color: #666;
+              }
+              .header p {
+                font-size: 14px;
+                color: #888;
+                margin: 0;
+              }
+              .match-list {
+                max-width: 800px;
+                margin: 0 auto;
+              }
               .match { 
-                margin: 15px 0; 
-                padding: 15px; 
-                border: 1px solid #ccc; 
-                border-radius: 8px;
-                background-color: #f9f9f9;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                margin: 8px 0; 
+                padding: 12px 16px; 
+                border: 1px solid #ddd; 
+                border-radius: 6px;
+                background-color: #f8f9fa;
+                min-height: 50px;
+              }
+              .match:nth-child(even) {
+                background-color: #ffffff;
               }
               .match-number {
                 font-weight: bold;
                 color: #2563eb;
-                font-size: 1.1em;
+                font-size: 16px;
+                min-width: 80px;
               }
               .teams {
-                margin-top: 8px;
-                font-size: 1.05em;
+                flex: 1;
+                text-align: center;
+                font-size: 15px;
+                font-weight: 500;
               }
               .vs {
                 color: #666;
-                font-weight: bold;
-                margin: 0 10px;
+                font-weight: normal;
+                margin: 0 8px;
               }
-              .phase {
-                background-color: #e5e7eb;
-                padding: 4px 8px;
+              .result-box {
+                min-width: 120px;
+                text-align: center;
+                border: 1px solid #ccc;
                 border-radius: 4px;
-                font-size: 0.9em;
-                color: #374151;
-                display: inline-block;
-                margin-top: 8px;
+                padding: 8px 12px;
+                background-color: white;
+                font-size: 14px;
+                color: #666;
               }
               @media print { 
-                body { margin: 0; }
-                .match { break-inside: avoid; }
+                body { 
+                  margin: 0; 
+                  font-size: 12px;
+                }
+                .match { 
+                  break-inside: avoid; 
+                  margin: 4px 0;
+                  padding: 8px 12px;
+                }
+                .header h1 { font-size: 24px; }
+                .header h2 { font-size: 18px; }
               }
             </style>
           </head>
@@ -127,6 +166,7 @@ const Index = () => {
               <h2>Lista de Jogos para Acompanhamento</h2>
               <p>Data de Geração: ${new Date().toLocaleDateString('pt-BR')}</p>
             </div>
+            <div class="match-list">
       `;
 
       matches.forEach((match, index) => {
@@ -138,15 +178,21 @@ const Index = () => {
             <div class="teams">
               ${team1Name} <span class="vs">vs</span> ${team2Name}
             </div>
-            ${match.phase ? `<div class="phase">${match.phase}</div>` : ''}
-            <div style="margin-top: 15px; border-top: 1px dashed #ccc; padding-top: 10px;">
-              <strong>Resultado:</strong> _____ x _____
+            <div class="result-box">
+              _____ x _____
             </div>
           </div>
         `;
       });
 
-      matchesHTML += '</body></html>';
+      matchesHTML += `
+            </div>
+            <div style="margin-top: 30px; text-align: center; font-size: 14px; color: #666;">
+              <strong>Total de jogos:</strong> ${matches.length}
+            </div>
+          </body>
+        </html>
+      `;
       matchesWindow.document.write(matchesHTML);
       matchesWindow.document.close();
       matchesWindow.print();
