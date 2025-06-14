@@ -1,23 +1,15 @@
+
 import React from 'react';
 import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { FileText, Download, Trophy, Users, Target, Printer, Crown } from 'lucide-react';
+import { Trophy, Users, Target, Crown } from 'lucide-react';
 
 interface TournamentReportProps {
   tournamentData: any;
 }
 
 const TournamentReport = ({ tournamentData }: TournamentReportProps) => {
-  const generatePDF = () => {
-    window.print();
-  };
-
-  const handlePrint = () => {
-    window.print();
-  };
-
   const getStatistics = () => {
     const matches = tournamentData.matches || [];
     const teams = tournamentData.teams || [];
@@ -81,7 +73,7 @@ const TournamentReport = ({ tournamentData }: TournamentReportProps) => {
       <div className="space-y-8">
         <Card className="bg-gray-800 border-gray-700 p-8">
           <div className="text-center">
-            <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <Trophy className="w-16 h-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-2xl font-bold text-white mb-2">Relatório não disponível</h3>
             <p className="text-gray-400">Nenhum dado de torneio encontrado para gerar o relatório.</p>
           </div>
@@ -91,13 +83,13 @@ const TournamentReport = ({ tournamentData }: TournamentReportProps) => {
   }
 
   return (
-    <div className="space-y-6 print:space-y-8 print:bg-white">
+    <div className="space-y-6 print:space-y-4 print:bg-white">
       {/* Header with tournament title */}
-      <div className="text-center print:mb-12">
-        <h1 className="text-3xl print:text-6xl font-bold text-white print:text-black mb-4">
+      <div className="text-center print:mb-8">
+        <h1 className="text-3xl print:text-5xl font-bold text-white print:text-black mb-4">
           {tournamentData.name}
         </h1>
-        <h2 className="text-xl print:text-4xl font-semibold text-gray-300 print:text-gray-700 mb-6">
+        <h2 className="text-xl print:text-3xl font-semibold text-gray-300 print:text-gray-700 mb-4">
           RELATÓRIO FINAL DO TORNEIO
         </h2>
         <div className="text-base print:text-lg text-gray-400 print:text-gray-600">
@@ -109,32 +101,6 @@ const TournamentReport = ({ tournamentData }: TournamentReportProps) => {
           })}</p>
         </div>
       </div>
-
-      {/* Print Controls */}
-      <Card className="bg-gray-800 border-gray-700 p-6 print:hidden">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
-            <FileText className="w-6 h-6" />
-            Relatório do Torneio
-          </h2>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <Button
-              onClick={handlePrint}
-              className="bg-blue-600 hover:bg-blue-700 flex items-center gap-2"
-            >
-              <Printer className="w-4 h-4" />
-              Imprimir Relatório
-            </Button>
-            <Button
-              onClick={generatePDF}
-              className="bg-green-600 hover:bg-green-700 flex items-center gap-2"
-            >
-              <Download className="w-4 h-4" />
-              Download PDF
-            </Button>
-          </div>
-        </div>
-      </Card>
 
       {/* Final Standings */}
       <Card className="bg-gray-800 border-gray-700 p-6 print:bg-white print:border-gray-300">
@@ -196,7 +162,7 @@ const TournamentReport = ({ tournamentData }: TournamentReportProps) => {
         </div>
         
         {finalStandings.length > 0 && (
-          <div className="mt-6 text-sm print:text-base text-gray-400 print:text-gray-600">
+          <div className="mt-4 text-sm print:text-base text-gray-400 print:text-gray-600">
             <strong>Critérios de Desempate:</strong> 1º Número de vitórias, 2º Saldo de pontos (pontos pró - pontos contra)
           </div>
         )}
@@ -210,7 +176,7 @@ const TournamentReport = ({ tournamentData }: TournamentReportProps) => {
             <h3 className="text-lg print:text-2xl font-bold text-white print:text-black">Resultados dos Jogos</h3>
           </div>
           
-          <div className="space-y-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {allMatches.map((match, index) => {
               const team1Name = getTeamName(match.teamIds[0], tournamentData);
               const team2Name = getTeamName(match.teamIds[1], tournamentData);
@@ -235,7 +201,7 @@ const TournamentReport = ({ tournamentData }: TournamentReportProps) => {
             })}
           </div>
           
-          <div className="mt-6 text-sm print:text-base text-gray-400 print:text-gray-600">
+          <div className="mt-4 text-sm print:text-base text-gray-400 print:text-gray-600">
             <strong>Total de jogos realizados:</strong> {allMatches.length}
           </div>
         </Card>
