@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -201,6 +200,137 @@ const Index = () => {
     }
   };
 
+  // NOVO: handler para impressão do backup, com layout aprimorado
+  const handlePrintMatchesBackup = () => {
+    const matchesWindow = window.open('', '_blank');
+    if (matchesWindow) {
+      const matches = tournamentData.matches || [];
+      let matchesHTML = `
+        <html>
+          <head>
+            <title>Backup de Jogos - ${tournamentData.name}</title>
+            <style>
+              body {
+                font-family: Arial, sans-serif;
+                margin: 24px 16px 18px 16px;
+                color: #323232;
+                background: #fafcff;
+              }
+              .header {
+                text-align: center;
+                margin-bottom: 24px;
+                border-bottom: 2px solid #2563eb;
+                padding-bottom: 10px;
+              }
+              .header h1 {
+                font-size: 26px;
+                font-weight: bold;
+                color: #2563eb;
+                margin: 0 0 5px 0;
+              }
+              .header h2 {
+                font-size: 17px;
+                color: #323232;
+                margin: 0 0 4px 0;
+              }
+              .header p {
+                color: #888;
+                font-size: 13px;
+                margin: 0;
+              }
+              .matches-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 16px;
+                max-width: 960px;
+                margin: 0 auto;
+              }
+              @media (max-width: 700px) {
+                .matches-grid { grid-template-columns: 1fr; }
+              }
+              .match-box {
+                background: #f1f5fa;
+                border: 1.5px solid #93c5fd;
+                border-radius: 10px;
+                min-height: 56px;
+                padding: 10px 16px;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                box-shadow: 0 2px 6px rgba(37,99,235,0.06);
+              }
+              .match-header {
+                font-weight: bold;
+                color: #2563eb;
+                font-size: 14px;
+                margin-bottom: 5px;
+              }
+              .match-teams {
+                font-weight: 500;
+                color: #222f;
+                font-size: 15px;
+                margin-bottom: 4px;
+                word-break: break-word;
+              }
+              .match-score {
+                color: #444;
+                font-size: 13px;
+                font-style: italic;
+                letter-spacing: 2px;
+                margin-top: 1px;
+              }
+              .matches-summary {
+                margin-top: 30px;
+                text-align: center;
+                font-size: 15px;
+                color: #444;
+              }
+              @media print {
+                body { margin: 0px; }
+                .header h1 { font-size: 22px; }
+                .header h2 { font-size: 15px; }
+                .matches-grid { grid-gap: 9px; }
+                .match-box { font-size: 12px; padding: 7px 9px; }
+                .matches-summary { font-size: 12px; }
+                .header { border-bottom: 1px solid #2563eb; margin-bottom: 16px; }
+              }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <h1>${tournamentData.name}</h1>
+              <h2>Backup de Jogos do Torneio</h2>
+              <p>Data de Geração: ${new Date().toLocaleDateString('pt-BR')}</p>
+            </div>
+            <div class="matches-grid">
+      `;
+
+      matches.forEach((match, idx) => {
+        const team1Name = getTeamDisplayName(match.teamIds[0]);
+        const team2Name = getTeamDisplayName(match.teamIds[1]);
+        matchesHTML += `
+          <div class="match-box">
+            <div class="match-header">Jogo ${idx + 1}</div>
+            <div class="match-teams">${team1Name} <span style="margin:0 6px;color:#666;">vs</span> ${team2Name}</div>
+            <div class="match-score">_____ x _____</div>
+          </div>
+        `;
+      });
+
+      matchesHTML += `
+            </div>
+            <div class="matches-summary">
+              <strong>Total de jogos:</strong> ${matches.length}
+            </div>
+          </body>
+        </html>
+      `;
+      matchesWindow.document.write(matchesHTML);
+      matchesWindow.document.close();
+      matchesWindow.print();
+    }
+  };
+
   const getTeamDisplayName = (teamId: any) => {
     if (Array.isArray(teamId)) {
       const playerNames = teamId.map(playerId => {
@@ -284,11 +414,10 @@ const Index = () => {
                     <FileText className="w-5 h-5" />
                     Opções de Jogos
                   </h3>
-                  {/* Removido o botão azul grande aqui */}
+                  {/* Removido o botão "Histórico de Fases" deste local */}
 
-                  {/* Centralizar os botões menores, se houver */}
-                  <div className="flex justify-center gap-3">
-                    {/* Exemplo: Botão pequeno de impressão */}
+                  {/* Alinhar os botões de impressão lado a lado e centralizados */}
+                  <div className="flex justify-center gap-3 flex-wrap">
                     <Button
                       onClick={handlePrintMatches}
                       size="sm"
@@ -297,11 +426,19 @@ const Index = () => {
                       <Printer className="w-4 h-4" />
                       Imprimir Jogos
                     </Button>
-                    {/* Adicione outros botões pequenos aqui, se necessário */}
+                    <Button
+                      onClick={handlePrintMatchesBackup}
+                      size="sm"
+                      className="bg-emerald-700 hover:bg-emerald-800 flex items-center gap-2"
+                    >
+                      <Printer className="w-4 h-4" />
+                      Imprimir Jogos Backup
+                    </Button>
                   </div>
                 </Card>
               )}
 
+              {/* ... keep existing MatchManager component, etc ... */}
               <MatchManager 
                 tournamentData={tournamentData} 
                 onUpdate={updateTournament}
@@ -405,4 +542,3 @@ const getFormatName = (format) => {
 };
 
 export default Index;
-
