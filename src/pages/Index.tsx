@@ -410,13 +410,13 @@ const Index = () => {
             <div className="space-y-6">
               {/* REF: Novo card de opções de jogos, botões todos centralizados */}
               <GameOptionsCard
-                matches={matches}
+                matches={tournamentData.matches}
                 tournamentName={tournamentData.name}
                 getTeamDisplayName={getTeamDisplayName}
                 handlePrintMatches={handlePrintMatches}
                 handlePrintMatchesBackup={handlePrintMatchesBackup}
               />
-              {/* ... keep existing MatchManager component, etc ... */}
+              {/* ... keep existing code (MatchManager component, etc) the same ... */}
               <MatchManager 
                 tournamentData={tournamentData} 
                 onUpdate={updateTournament}
