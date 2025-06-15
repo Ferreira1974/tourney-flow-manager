@@ -616,24 +616,28 @@ const MatchManager = ({ tournamentData, onUpdate }: MatchManagerProps) => {
     const completedPhases = getCompletedPhases();
     const currentPhase = tournamentData.status;
 
-    // Novo: sempre exibir jogos da final e terceiro lugar quando em 'final', 'third_place' ou 'finished'
+    // Sempre mostrar as finais e disputa de 3º nas fases adequadas
     let displayMatches: any[] = [];
-
     if (
       currentPhase === 'final' ||
       currentPhase === 'third_place' ||
       currentPhase === 'finished'
     ) {
-      // Mostra todos jogos das duas fases juntos, garantindo ordenação (final primeiro)
+      // Final e 3º lugar juntos
       displayMatches = (tournamentData.matches || []).filter(
         m => m.phase === 'final' || m.phase === 'third_place'
       );
-      // Ordena: final antes, terceiro lugar depois
       displayMatches.sort((a, b) => {
         const phaseOrder = { 'final': 0, 'third_place': 1 };
         return (phaseOrder[a.phase] ?? 99) - (phaseOrder[b.phase] ?? 99);
       });
+    } else if (currentPhase === "semifinals") {
+      // Exibir os 2 jogos da semifinal
+      displayMatches = (tournamentData.matches || []).filter(
+        m => m.phase === "semifinals"
+      );
     } else {
+      // Fases restantes
       displayMatches = (tournamentData.matches || []).filter(
         m => m.phase === currentPhase
       );
@@ -641,17 +645,8 @@ const MatchManager = ({ tournamentData, onUpdate }: MatchManagerProps) => {
 
     return (
       <div className="space-y-6">
-        <div className="flex flex-wrap gap-3 items-center justify-end mb-2">
-          <Button 
-            onClick={() => setShowBackupModal(true)}
-            className="bg-blue-600 hover:bg-blue-700 flex items-center gap-2"
-            type="button"
-          >
-            <span>Imprimir lista de jogos / backup</span>
-          </Button>
-          {/* Removido o botão Histórico de Fases */}
-        </div>
-        {/* modais de backup e histórico */}
+        {/* Removido botão azul "Imprimir lista de jogos / backup" */}
+        {/* Modais de backup e histórico permanecem, se implementados (ajuste conforme necessidade) */}
         {renderBackupModal()}
         {/* resto da aba jogos padrão */}
         <Tabs defaultValue="current" className="w-full">
@@ -671,7 +666,9 @@ const MatchManager = ({ tournamentData, onUpdate }: MatchManagerProps) => {
                   <Trophy className="w-6 h-6" />
                   {(currentPhase === 'final' || currentPhase === 'third_place' || currentPhase === 'finished')
                     ? 'Final e Disputa de 3º Lugar'
-                    : getPhaseTitle(currentPhase)
+                    : currentPhase === 'semifinals'
+                      ? 'Semifinais'
+                      : getPhaseTitle(currentPhase)
                   }
                 </h2>
                 <Badge className="bg-blue-600 text-white text-lg px-4 py-2">
@@ -685,7 +682,10 @@ const MatchManager = ({ tournamentData, onUpdate }: MatchManagerProps) => {
                     <div className="flex items-center justify-between">
                       {/* Match Title */}
                       <div className="text-blue-400 font-bold text-lg min-w-[150px]">
-                        {match.phase === 'final' ? 'FINAL' : match.phase === 'third_place' ? '3º LUGAR' : `Jogo ${index + 1}`}
+                        {match.phase === 'final' ? 'FINAL'
+                          : match.phase === 'third_place' ? '3º LUGAR'
+                          : match.phase === 'semifinals' ? `Semifinal ${index + 1}`
+                          : `Jogo ${index + 1}`}
                       </div>
                       
                       {/* Teams */}

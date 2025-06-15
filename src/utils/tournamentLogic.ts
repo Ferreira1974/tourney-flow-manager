@@ -155,8 +155,29 @@ const generateDoublesEliminationMatches = (qualifiedTeams: any[], phase: string)
         winnerId: null
       });
     }
+  } else if (phase === "semifinals" && qualifiedTeams.length === 4) {
+    // CRUZAMENTO OLÍMPICO: 1º x 4º, 2º x 3º
+    // (Importante: tanto para exibição quanto geração dos jogos)
+    matches.push({
+      id: `m_semifinals_${matchIdCounter++}`,
+      phase: "semifinals",
+      round: "semifinals",
+      teamIds: [qualifiedTeams[0].id, qualifiedTeams[3].id], // 1º x 4º
+      score1: null,
+      score2: null,
+      winnerId: null
+    });
+    matches.push({
+      id: `m_semifinals_${matchIdCounter++}`,
+      phase: "semifinals",
+      round: "semifinals",
+      teamIds: [qualifiedTeams[1].id, qualifiedTeams[2].id], // 2º x 3º
+      score1: null,
+      score2: null,
+      winnerId: null
+    });
   } else {
-    // Fases eliminatórias com cruzamento olímpico
+    // Fases eliminatórias com cruzamento olímpico tradicional (oitavas/quartas, se existir)
     const pairedTeams = createOlympicCrossing(qualifiedTeams);
     
     pairedTeams.forEach(pair => {
