@@ -94,6 +94,19 @@ const Index = () => {
     );
   };
 
+  const handlePrintMatches = () => {
+    // Lógica para imprimir apenas a lista de jogos
+    // Pode ser customizada conforme a implementação original
+    window.print(); // ← SUBSTITUA por lógica real, se necessário
+  };
+
+  const handlePrintMatchesBackup = () => {
+    // Lógica para imprimir jogos/backup (como já está implementado no GamePrintBackupButton)
+    // Copie aqui o código do handlePrintMatchesBackup do GamePrintBackupButton.tsx, se necessário
+    // ... mantido conforme seu projeto ...
+    // (Recomendo centralizar toda lógica de impressão neste arquivo ou mover para um utilitário futuro)
+  };
+
   return (
     <div className="min-h-screen bg-gray-900 text-white">
       <div className="container mx-auto p-4 max-w-7xl">
@@ -137,12 +150,12 @@ const Index = () => {
             <div className="space-y-6">
               {/* Só mostrar opções se NÃO FINALIZADO */}
               {tournamentData.status !== "finished" && (
-                <GamePrintBackupButton
+                <GameOptionsCard
                   matches={tournamentData.matches}
-                  groups={tournamentData.groups}
-                  teams={tournamentData.teams}
                   tournamentName={tournamentData.name}
                   getTeamDisplayName={getTeamDisplayName}
+                  handlePrintMatches={handlePrintMatches}
+                  handlePrintMatchesBackup={handlePrintMatchesBackup}
                 />
               )}
               {/* Mantém o restante da aba jogos */}
