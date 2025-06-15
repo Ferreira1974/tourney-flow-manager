@@ -19,6 +19,8 @@ const MatchManager = ({ tournamentData, onUpdate }: MatchManagerProps) => {
   const { toast } = useToast();
   const [scores, setScores] = useState<{ [key: string]: { score1: string; score2: string } }>({});
   const [showPhasePanel, setShowPhasePanel] = useState(false);
+  const [showBackupModal, setShowBackupModal] = useState(false);
+  const [activePhaseHistory, setActivePhaseHistory] = useState(false);
 
   useEffect(() => {
     // Generate matches if needed and not already generated
@@ -408,6 +410,179 @@ const MatchManager = ({ tournamentData, onUpdate }: MatchManagerProps) => {
     );
   };
 
+  const renderPrintableGroups = () => {
+    if (
+      tournamentData.format !== 'doubles_groups' ||
+      !tournamentData.groups ||
+      tournamentData.groups.length === 0
+    ) return null;
+
+    return (
+      <div className="mb-6 break-inside-avoid">
+        <h3 className="text-xl font-bold text-center text-black mb-3 print:mb-3">Formação das Chaves</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {tournamentData.groups.map((group: any) => (
+            <div key={group.id} className="border border-gray-400 rounded-lg p-3 bg-gray-50">
+              <div className="font-bold text-blue-700 mb-2">{group.name}</div>
+              <ol className="space-y-1">
+                {group.teamIds.map((tid: string, idx: number) => {
+                  const team = (tournamentData.teams || []).find((t: any) => t.id === tid);
+                  return (
+                    <li key={tid} className="text-black text-sm">
+                      <span className="font-bold">{idx + 1}.</span> {team ? team.name : 'Dupla'}
+                    </li>
+                  );
+                })}
+              </ol>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  const renderBackupModal = () => {
+    if (!showBackupModal) return null;
+    if (tournamentData.format !== "doubles_groups") return null;
+    const allMatches = tournamentData.matches || [];
+
+    // Ordena: por fase, depois por ordem no array (opcional: refine se desejar)
+    const phaseOrderObj: Record<string, number> = {
+      group_stage: 0, round_of_16: 1, quarterfinals: 2, semifinals: 3, final: 4, third_place: 5
+    };
+    const orderedMatches = [...allMatches].sort((a: any, b: any) => (phaseOrderObj[a.phase] ?? 999) - (phaseOrderObj[b.phase] ?? 999));
+
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 print:bg-white print:static print:block" style={{printColorAdjust:'exact'}}>
+        <div className="max-w-3xl w-full bg-white rounded-lg p-6 shadow-2xl overflow-auto relative print:shadow-none print:rounded-none print:p-4">
+          <button 
+            onClick={() => setShowBackupModal(false)} 
+            className="absolute top-2 right-4 bg-gray-900 text-white rounded px-3 py-1 text-xs font-medium hover:bg-gray-700 print:hidden"
+          >Fechar</button>
+          <h2 className="text-2xl font-bold text-center mb-2 text-black print:text-black">Lista de Jogos (Backup)</h2>
+          {/* Chaves antes dos jogos */}
+          {renderPrintableGroups()}
+          <div>
+            <h3 className="mb-2 mt-6 text-lg font-bold text-black print:text-black">Listagem de Jogos</h3>
+            <table className="min-w-full border print:text-black">
+              <thead>
+                <tr>
+                  <th className="border px-2 py-1 text-xs">Fase</th>
+                  <th className="border px-2 py-1 text-xs">Jogo</th>
+                  <th className="border px-2 py-1 text-xs">Duplas</th>
+                  <th className="border px-2 py-1 text-xs">Placar</th>
+                </tr>
+              </thead>
+              <tbody>
+                {orderedMatches.map((match: any, idx: number) => (
+                  <tr key={match.id}>
+                    <td className="border px-2 py-1 text-xs">
+                      {getPhaseTitle(match.phase)}
+                    </td>
+                    <td className="border px-2 py-1 text-xs">
+                      {match.phase === 'final' ? 'FINAL' : 
+                        match.phase === 'third_place' ? '3º LUGAR' : 
+                        `Jogo ${idx + 1}`
+                      }
+                    </td>
+                    <td className="border px-2 py-1 text-xs">
+                      {getTeamName(match.teamIds[0])} vs {getTeamName(match.teamIds[1])}
+                    </td>
+                    <td className="border px-2 py-1 text-xs font-bold">
+                      {match.score1 != null && match.score2 != null ? `${match.score1} x ${match.score2}` : ' - '}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="mt-5 flex justify-between print:hidden">
+            <button
+              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+              onClick={() => window.print()}
+            >
+              Imprimir página
+            </button>
+            <button
+              className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded"
+              onClick={() => setShowBackupModal(false)}
+            >
+              Fechar
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  };
+
+  const renderPhaseHistoryModal = () => {
+    if (!activePhaseHistory || tournamentData.format !== "doubles_groups") return null;
+    const matches = tournamentData.matches || [];
+    const phaseOrder = [
+      'group_stage',
+      'round_of_16',
+      'quarterfinals',
+      'semifinals',
+      'final',
+      'third_place',
+    ];
+    const phaseLabels: Record<string,string> = {
+      group_stage:'Fase de Grupos', round_of_16:'Oitavas de Final', quarterfinals:'Quartas de Final', semifinals:'Semifinais', final:'Final', third_place:'Disputa 3º Lugar'
+    };
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 print:bg-transparent print:static print:block">
+        <div className="max-w-4xl w-full bg-white rounded-lg p-6 shadow-2xl overflow-auto relative print:shadow-none print:p-4 print:rounded-none">
+          <button
+            onClick={() => setActivePhaseHistory(false)}
+            className="absolute top-2 right-4 bg-gray-900 text-white rounded px-3 py-1 text-xs font-medium hover:bg-gray-700 print:hidden"
+          >Fechar</button>
+          <h2 className="text-2xl font-bold text-center mb-4 text-black print:text-black">Histórico de Fases</h2>
+          {phaseOrder.map(phase => {
+            const phaseMatches = matches.filter((m: any) => m.phase === phase);
+            if (!phaseMatches.length) return null;
+            return (
+              <div key={phase} className="mb-6 break-inside-avoid">
+                <h3 className="text-lg font-bold mb-2 text-blue-700">
+                  {phaseLabels[phase] || phase}
+                </h3>
+                <table className="min-w-full border mb-3 print:text-black">
+                  <thead>
+                    <tr>
+                      <th className="border px-2 py-1 text-xs">Jogo</th>
+                      <th className="border px-2 py-1 text-xs">Duplas</th>
+                      <th className="border px-2 py-1 text-xs">Placar</th>
+                      <th className="border px-2 py-1 text-xs">Vencedor</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {phaseMatches.map((match: any, idx: number) => (
+                      <tr key={match.id}>
+                        <td className="border px-2 py-1 text-xs">
+                          {match.phase === 'final' ? 'FINAL' :
+                            match.phase === 'third_place' ? '3º LUGAR' :
+                            `Jogo ${idx + 1}`}
+                        </td>
+                        <td className="border px-2 py-1 text-xs">
+                          {getTeamName(match.teamIds[0])} vs {getTeamName(match.teamIds[1])}
+                        </td>
+                        <td className="border px-2 py-1 text-xs font-bold">
+                          {match.score1 != null && match.score2 != null ? `${match.score1} x ${match.score2}` : '-'}
+                        </td>
+                        <td className="border px-2 py-1 text-xs">
+                          {match.winnerId ? getTeamName(match.winnerId) : '-'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
   if (matches.length === 0) {
     return (
       <Card className="bg-gray-800 border-gray-700 p-8 text-center">
@@ -449,6 +624,26 @@ const MatchManager = ({ tournamentData, onUpdate }: MatchManagerProps) => {
 
     return (
       <div className="space-y-6">
+        <div className="flex flex-wrap gap-3 items-center justify-end mb-2">
+          <Button 
+            onClick={() => setShowBackupModal(true)}
+            className="bg-blue-600 hover:bg-blue-700 flex items-center gap-2"
+            type="button"
+          >
+            <span>Imprimir lista de jogos / backup</span>
+          </Button>
+          <Button 
+            onClick={() => setActivePhaseHistory(true)}
+            className="bg-teal-600 hover:bg-teal-700 flex items-center gap-2"
+            type="button"
+          >
+            <span>Histórico de Fases</span>
+          </Button>
+        </div>
+        {/* modais de backup e histórico */}
+        {renderBackupModal()}
+        {renderPhaseHistoryModal()}
+        {/* resto da aba jogos padrão */}
         <Tabs defaultValue="current" className="w-full">
           <TabsList className="grid w-full grid-cols-2 bg-gray-800 border-gray-700">
             <TabsTrigger value="current" className="data-[state=active]:bg-blue-600">
