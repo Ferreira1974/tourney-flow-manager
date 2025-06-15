@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -283,13 +284,21 @@ const Index = () => {
                     <FileText className="w-5 h-5" />
                     Opções de Jogos
                   </h3>
-                  <Button
-                    onClick={handlePrintMatches}
-                    className="w-full bg-blue-600 hover:bg-blue-700 flex items-center justify-center gap-2"
-                  >
-                    <Printer className="w-4 h-4" />
-                    Imprimir Lista de Jogos (Backup)
-                  </Button>
+                  {/* Removido o botão azul grande aqui */}
+
+                  {/* Centralizar os botões menores, se houver */}
+                  <div className="flex justify-center gap-3">
+                    {/* Exemplo: Botão pequeno de impressão */}
+                    <Button
+                      onClick={handlePrintMatches}
+                      size="sm"
+                      className="bg-blue-600 hover:bg-blue-700 flex items-center gap-2"
+                    >
+                      <Printer className="w-4 h-4" />
+                      Imprimir Jogos
+                    </Button>
+                    {/* Adicione outros botões pequenos aqui, se necessário */}
+                  </div>
                 </Card>
               )}
 
@@ -396,3 +405,4 @@ const getFormatName = (format) => {
 };
 
 export default Index;
+
