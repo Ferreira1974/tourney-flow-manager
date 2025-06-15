@@ -27,9 +27,11 @@ export default function DoublesGamesByPhase({ tournamentData }: DoublesGamesByPh
     { key: 'final', label: 'Final' },
     { key: 'third_place', label: 'Disputa 3º Lugar' }
   ];
+
+  // Mostrar todos os jogos, não apenas os já finalizados
   const matches = tournamentData.matches || [];
   const gamesByPhase: Record<string, any[]> = {};
-  matches.filter((m: any) => m.winnerId).forEach((match: any) => {
+  matches.forEach((match: any) => {
     if (!gamesByPhase[match.phase]) gamesByPhase[match.phase] = [];
     gamesByPhase[match.phase].push(match);
   });
