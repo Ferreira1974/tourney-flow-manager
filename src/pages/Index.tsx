@@ -14,6 +14,7 @@ import TournamentReport from '@/components/TournamentReport';
 import { useTournamentData } from '@/hooks/useTournamentData';
 import { Crown, Users, Trophy, FileText, RotateCcw, Printer } from 'lucide-react';
 import { getStatusBadge } from '@/utils/phaseUtils';
+import GameOptionsCard from "@/components/GameOptionsCard";
 
 const Index = () => {
   const { tournamentData, updateTournament, resetTournament, isLoading } = useTournamentData();
@@ -407,37 +408,14 @@ const Index = () => {
 
           <TabsContent value="matches">
             <div className="space-y-6">
-              {/* Game Options Card */}
-              {tournamentData.matches && tournamentData.matches.length > 0 && (
-                <Card className="bg-gray-800 border-gray-700 p-6">
-                  <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                    <FileText className="w-5 h-5" />
-                    Opções de Jogos
-                  </h3>
-                  {/* Removido o botão "Histórico de Fases" deste local */}
-
-                  {/* Alinhar os botões de impressão lado a lado e centralizados */}
-                  <div className="flex justify-center gap-3 flex-wrap">
-                    <Button
-                      onClick={handlePrintMatches}
-                      size="sm"
-                      className="bg-blue-600 hover:bg-blue-700 flex items-center gap-2"
-                    >
-                      <Printer className="w-4 h-4" />
-                      Imprimir Jogos
-                    </Button>
-                    <Button
-                      onClick={handlePrintMatchesBackup}
-                      size="sm"
-                      className="bg-emerald-700 hover:bg-emerald-800 flex items-center gap-2"
-                    >
-                      <Printer className="w-4 h-4" />
-                      Imprimir Jogos Backup
-                    </Button>
-                  </div>
-                </Card>
-              )}
-
+              {/* REF: Novo card de opções de jogos, botões todos centralizados */}
+              <GameOptionsCard
+                matches={matches}
+                tournamentName={tournamentData.name}
+                getTeamDisplayName={getTeamDisplayName}
+                handlePrintMatches={handlePrintMatches}
+                handlePrintMatchesBackup={handlePrintMatchesBackup}
+              />
               {/* ... keep existing MatchManager component, etc ... */}
               <MatchManager 
                 tournamentData={tournamentData} 
