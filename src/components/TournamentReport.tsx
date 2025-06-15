@@ -73,6 +73,30 @@ const TournamentReport = ({ tournamentData }: TournamentReportProps) => {
   };
 
   const stats = getStatistics();
+
+  const getTeamName = (teamId: any, tournamentData: any) => {
+    if (Array.isArray(teamId)) {
+      const playerNames = teamId.map(playerId => {
+        const player = (tournamentData.players || []).find(p => p.id === playerId);
+        return player ? player.name : 'Jogador';
+      });
+      return playerNames.join(' / ');
+    }
+    
+    const team = (tournamentData.teams || []).find(t => t.id === teamId);
+    return team ? team.name : 'Time';
+  };
+
+  const getFormatName = (format: string) => {
+    const formats = {
+      super8: 'Super 8',
+      doubles_groups: 'Torneio de Duplas',
+      super16: 'Super 16',
+      king_of_the_court: 'Rei da Quadra'
+    };
+    return formats[format] || format;
+  };
+
   const finalStandings = getFinalStandings();
   const allMatches = getAllMatches();
 
@@ -90,40 +114,48 @@ const TournamentReport = ({ tournamentData }: TournamentReportProps) => {
     );
   }
 
-  const renderDoublesGroups = () => {
-    if (tournamentData.format !== 'doubles_groups') return null;
-    const groups = tournamentData.groups || [];
-    if (!groups.length) return null;
-    return (
-      <Card className="bg-gray-800 border-gray-700 p-3 print:bg-white print:border-gray-300 print:shadow-none">
-        <div className="flex items-center gap-3 mb-3">
-          <Users className="w-5 h-5 text-blue-400 print:text-blue-600" />
-          <h3 className="text-base print:text-lg font-bold text-white print:text-black">Formação das Chaves</h3>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {groups.map((group:any) => (
-            <div key={group.id} className="bg-gray-700 print:bg-gray-50 border rounded-lg p-3">
-              <div className="font-bold text-blue-300 mb-2">{group.name}</div>
-              <ol className="space-y-1">
-                {group.teamIds.map((tid:string, idx:number) => {
-                  const team = (tournamentData.teams || []).find((t:any) => t.id === tid);
-                  return (
-                    <li key={tid} className="text-white print:text-black text-sm">
-                      <span className="font-bold">{idx+1}.</span> {team ? team.name : 'Dupla'}
-                    </li>
-                  );
-                })}
-              </ol>
-            </div>
-          ))}
-        </div>
-      </Card>
-    );
+  // Utilitário: Listar jogos por fase, incluindo finais
+  const getGamesByPhase = () => {
+    const matches = tournamentData.matches || [];
+    if (!matches.length) return [];
+    // Agrupar por fase
+    const grouped: Record<string, any[]> = {};
+    matches.filter(m => m.winnerId).forEach(match => {
+      if (!grouped[match.phase]) grouped[match.phase] = [];
+      grouped[match.phase].push(match);
+    });
+    return grouped;
   };
 
-  const renderDoublesPhasesAndGames = () => {
-    if (tournamentData.format !== 'doubles_groups') return null;
-    const phaseOrder = [
+  // Utilitário: Campeão, finalista, terceiro
+  const getFinalMedalists = () => {
+    // Buscar final
+    const finalMatch = (tournamentData.matches || []).find(m => m.phase === "final" && m.winnerId);
+    const thirdMatch = (tournamentData.matches || []).find(m => m.phase === "third_place" && m.winnerId);
+
+    let champion = "";
+    let vice = "";
+    let third = "";
+
+    if (finalMatch) {
+      champion = getTeamName(finalMatch.winnerId, tournamentData);
+
+      const teamLoser = finalMatch.teamIds.find((tid: any) => tid !== finalMatch.winnerId);
+      vice = getTeamName(teamLoser, tournamentData);
+    }
+    if (thirdMatch) {
+      third = getTeamName(thirdMatch.winnerId, tournamentData);
+    }
+    return { champion, vice, third };
+  };
+
+  // NOVA exibição consolidada relatorio para "doubles_groups"
+  if (tournamentData.format === 'doubles_groups') {
+    const gamesByPhase = getGamesByPhase();
+    const medalists = getFinalMedalists();
+
+    // Definir ordem/campos das fases para exibição
+    const phasesOrder = [
       { key: 'group_stage', label: 'Fase de Grupos' },
       { key: 'round_of_16', label: 'Oitavas de Final' },
       { key: 'quarterfinals', label: 'Quartas de Final' },
@@ -131,43 +163,221 @@ const TournamentReport = ({ tournamentData }: TournamentReportProps) => {
       { key: 'final', label: 'Final' },
       { key: 'third_place', label: 'Disputa 3º Lugar' }
     ];
+
     return (
-      <div className="space-y-5">
-        {phaseOrder.map(phase => {
-          const phaseMatches = (tournamentData.matches || []).filter((m:any) => m.phase === phase.key);
-          if (!phaseMatches.length) return null;
-          return (
-            <Card key={phase.key} className="bg-gray-800 border-gray-700 p-3 print:bg-white print:border-gray-300 print:shadow-none">
-              <div className="flex items-center gap-2 mb-2">
-                <Trophy className="w-4 h-4 text-blue-400 print:text-blue-600" />
-                <span className="text-base print:text-lg font-bold text-white print:text-black">{phase.label}</span>
-              </div>
-              {phase.key === 'group_stage' && renderDoublesGroups()}
-              <div className="space-y-1">
-                {phaseMatches.map((match:any, i:number) => (
-                  <div key={match.id} className="flex items-center justify-between bg-gray-700 print:bg-gray-100 p-2 rounded-md border print:border-gray-200 mb-1">
-                    <div className="text-gray-300 print:text-gray-600 text-sm min-w-[110px]">
-                      Jogo {i+1}
-                    </div>
-                    <div className="flex-1 text-center">
-                      <span className="font-medium text-white print:text-black">{getTeamName(match.teamIds[0], tournamentData)}</span>
-                      <span className="text-gray-400 print:text-gray-600 mx-2">vs</span>
-                      <span className="font-medium text-white print:text-black">{getTeamName(match.teamIds[1], tournamentData)}</span>
-                    </div>
-                    <div className="text-white print:text-black font-bold min-w-[70px] text-right">
-                      {match.score1 !== null && match.score2 !== null ? (
-                        <span>{match.score1} x {match.score2}</span>
-                      ): <span className="text-xs text-gray-400 print:text-gray-600">Pendente</span>}
-                    </div>
-                  </div>
+      <div className="space-y-3 print:space-y-2 print:bg-white max-w-full overflow-hidden">
+        {/* Controles - só 1 botão */}
+        <Card className="bg-gray-800 border-gray-700 p-4 print:hidden">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+              <FileText className="w-6 h-6" />
+              Relatório do Torneio
+            </h2>
+            <Button
+              onClick={() => window.print()}
+              className="bg-blue-600 hover:bg-blue-700 flex items-center gap-2"
+            >
+              <Printer className="w-4 h-4" />
+              Imprimir Relatório Completo
+            </Button>
+          </div>
+        </Card>
+
+        {/* Cabeçalho */}
+        <div className="text-center print:mb-4 mb-3">
+          <h1 className="text-2xl print:text-3xl font-bold text-white print:text-black mb-1">
+            {tournamentData.name}
+          </h1>
+          <h2 className="text-lg print:text-xl font-semibold text-gray-300 print:text-gray-700 mb-2">
+            RELATÓRIO FINAL DO TORNEIO DE DUPLAS
+          </h2>
+          <div className="text-sm print:text-sm text-gray-400 print:text-gray-600">
+            <p>Data: {new Date(tournamentData.createdAt || Date.now()).toLocaleDateString('pt-BR', { 
+              day: '2-digit', 
+              month: 'long', 
+              year: 'numeric' 
+            })}</p>
+          </div>
+        </div>
+
+        {/* Medalhistas (podium) */}
+        <Card className="bg-gray-800 border-gray-700 p-3 print:bg-white print:border-gray-300 print:shadow-none">
+          <div className="flex items-center gap-3 mb-3">
+            <Crown className="w-5 h-5 text-yellow-400 print:text-yellow-600" />
+            <h3 className="text-base print:text-lg font-bold text-white print:text-black">Campeões e Finalistas</h3>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-center">
+            <div>
+              <span className="block text-xs text-amber-700 print:text-amber-800 font-bold">CAMPEÃO</span>
+              <span className="block text-lg md:text-xl font-bold text-yellow-400 print:text-yellow-700">{medalists.champion || '-'}</span>
+            </div>
+            <div>
+              <span className="block text-xs text-slate-700 print:text-slate-800 font-bold">VICE</span>
+              <span className="block text-lg md:text-xl font-bold text-gray-300 print:text-gray-700">{medalists.vice || '-'}</span>
+            </div>
+            <div>
+              <span className="block text-xs text-orange-700 print:text-orange-800 font-bold">3º LUGAR</span>
+              <span className="block text-lg md:text-xl font-bold text-amber-600 print:text-amber-800">{medalists.third || '-'}</span>
+            </div>
+          </div>
+        </Card>
+
+        {/* Classificação Final */}
+        <Card className="bg-gray-800 border-gray-700 p-3 print:bg-white print:border-gray-300 print:shadow-none">
+          <div className="flex items-center gap-3 mb-3">
+            <Crown className="w-5 h-5 text-yellow-400 print:text-yellow-600" />
+            <h3 className="text-base print:text-lg font-bold text-white print:text-black">Classificação Final</h3>
+          </div>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-gray-600 print:border-gray-300">
+                  <TableHead className="text-gray-300 print:text-gray-700 w-12 text-xs font-bold p-1">Pos.</TableHead>
+                  <TableHead className="text-gray-300 print:text-gray-700 text-xs font-bold p-1">Nome</TableHead>
+                  <TableHead className="text-gray-300 print:text-gray-700 text-center text-xs font-bold p-1">Jogos</TableHead>
+                  <TableHead className="text-gray-300 print:text-gray-700 text-center text-xs font-bold p-1">Vitórias</TableHead>
+                  <TableHead className="text-gray-300 print:text-gray-700 text-center text-xs font-bold p-1">Pontos Pró</TableHead>
+                  <TableHead className="text-gray-300 print:text-gray-700 text-center text-xs font-bold p-1">Pontos Contra</TableHead>
+                  <TableHead className="text-gray-300 print:text-gray-700 text-center text-xs font-bold p-1">Saldo</TableHead>
+                  <TableHead className="text-gray-300 print:text-gray-700 text-center text-xs font-bold p-1">Aproveitamento</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {finalStandings.map((participant) => (
+                  <TableRow key={participant.id} className="border-gray-600 print:border-gray-300">
+                    <TableCell className="font-bold text-white print:text-black text-xs p-1">
+                      <div className="flex items-center gap-1">
+                        <span className="text-xs">{participant.position}º</span>
+                        {participant.position <= 3 && (
+                          <div className={`w-2 h-2 rounded-full ${
+                            participant.position === 1 ? 'bg-yellow-500' : 
+                            participant.position === 2 ? 'bg-gray-400' : 'bg-amber-600'
+                          }`} />
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-white print:text-black p-1">
+                      <div>
+                        <div className="font-bold text-xs">{participant.name}</div>
+                        {participant.players && (
+                          <div className="text-xs text-gray-400 print:text-gray-600">
+                            {participant.players.join(' / ')}
+                          </div>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-center text-white print:text-black text-xs p-1">{participant.gamesPlayed || 0}</TableCell>
+                    <TableCell className="text-center text-white print:text-black font-bold text-xs p-1">{participant.wins || 0}</TableCell>
+                    <TableCell className="text-center text-white print:text-black text-xs p-1">{participant.pointsFor || 0}</TableCell>
+                    <TableCell className="text-center text-white print:text-black text-xs p-1">{participant.pointsAgainst || 0}</TableCell>
+                    <TableCell className={`text-center font-bold text-xs p-1 ${participant.pointsDiff >= 0 ? 'text-green-400 print:text-green-700' : 'text-red-400 print:text-red-700'}`}>
+                      {participant.pointsDiff >= 0 ? '+' : ''}{participant.pointsDiff}
+                    </TableCell>
+                    <TableCell className="text-center text-white print:text-black text-xs p-1">{participant.winRate}%</TableCell>
+                  </TableRow>
                 ))}
-              </div>
-            </Card>
-          )
-        })}
+              </TableBody>
+            </Table>
+          </div>
+          {finalStandings.length > 0 && (
+            <div className="mt-2 text-xs text-gray-400 print:text-gray-600">
+              <strong>Critérios de Desempate:</strong> 1º Número de vitórias, 2º Saldo de pontos (pontos pró - pontos contra)
+            </div>
+          )}
+        </Card>
+
+        {/* Formação das Chaves */}
+        {tournamentData.groups && tournamentData.groups.length > 0 && (
+          <Card className="bg-gray-900 border-gray-700 p-3 print:bg-gray-200 print:border-gray-300 print:shadow-none">
+            <div className="flex items-center gap-2 mb-2">
+              <Users className="w-5 h-5 text-blue-400 print:text-blue-600" />
+              <h3 className="text-base print:text-lg font-bold text-white print:text-black">Formação das Chaves</h3>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {tournamentData.groups.map((group:any) => (
+                <div key={group.id} className="bg-gray-700 print:bg-gray-50 border rounded-lg p-3">
+                  <div className="font-bold text-blue-300 mb-2">{group.name}</div>
+                  <ol className="space-y-1">
+                    {group.teamIds.map((tid:string, idx:number) => {
+                      const team = (tournamentData.teams || []).find((t:any) => t.id === tid);
+                      return (
+                        <li key={tid} className="text-white print:text-black text-sm">
+                          <span className="font-bold">{idx+1}.</span> {team ? team.name : 'Dupla'}
+                        </li>
+                      );
+                    })}
+                  </ol>
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
+
+        {/* Todos Jogos por Fase (inclusive finais) */}
+        <Card className="bg-gray-800 border-gray-700 p-3 print:bg-white print:border-gray-300 print:shadow-none">
+          <div className="flex items-center gap-3 mb-3">
+            <Trophy className="w-5 h-5 text-blue-400 print:text-blue-600" />
+            <h3 className="text-base print:text-lg font-bold text-white print:text-black">Jogos por Fase</h3>
+          </div>
+          <div className="space-y-4">
+            {phasesOrder.map(phase => (
+                gamesByPhase[phase.key] && !!gamesByPhase[phase.key].length && (
+                <div key={phase.key}>
+                  <div className="text-base print:text-lg font-bold text-blue-400 print:text-blue-700 mb-1">{phase.label}</div>
+                  <div className="space-y-1">
+                    {gamesByPhase[phase.key].map((match:any, i:number) => (
+                      <div key={match.id} className="flex items-center justify-between bg-gray-700 print:bg-gray-100 p-2 rounded-md border print:border-gray-200 mb-1">
+                        <div className="text-gray-300 print:text-gray-600 text-sm min-w-[110px]">
+                          Jogo {i+1}
+                        </div>
+                        <div className="flex-1 text-center">
+                          <span className="font-medium text-white print:text-black">{getTeamName(match.teamIds[0], tournamentData)}</span>
+                          <span className="text-gray-400 print:text-gray-600 mx-2">vs</span>
+                          <span className="font-medium text-white print:text-black">{getTeamName(match.teamIds[1], tournamentData)}</span>
+                        </div>
+                        <div className="text-white print:text-black font-bold min-w-[70px] text-right">
+                          {match.score1 !== null && match.score2 !== null ? (
+                            <span>{match.score1} x {match.score2}</span>
+                          ): <span className="text-xs text-gray-400 print:text-gray-600">Pendente</span>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )
+            ))}
+          </div>
+        </Card>
+
+        {/* Estatísticas */}
+        <Card className="bg-gray-800 border-gray-700 p-3 print:bg-white print:border-gray-300 print:shadow-none">
+          <div className="flex items-center gap-3 mb-3">
+            <Target className="w-5 h-5 text-green-400 print:text-green-600" />
+            <h3 className="text-base print:text-lg font-bold text-white print:text-black">Estatísticas do Torneio</h3>
+          </div>
+          
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="text-center">
+              <div className="text-lg print:text-xl font-bold text-white print:text-black">{stats.totalParticipants}</div>
+              <div className="text-xs text-gray-400 print:text-gray-700 mt-1">Participantes</div>
+            </div>
+            <div className="text-center">
+              <div className="text-lg print:text-xl font-bold text-white print:text-black">{stats.completedMatches}</div>
+              <div className="text-xs text-gray-400 print:text-gray-700 mt-1">Jogos Realizados</div>
+            </div>
+            <div className="text-center">
+              <div className="text-lg print:text-xl font-bold text-white print:text-black">{stats.totalPoints}</div>
+              <div className="text-xs text-gray-400 print:text-gray-700 mt-1">Total de Pontos</div>
+            </div>
+            <div className="text-center">
+              <div className="text-lg print:text-xl font-bold text-white print:text-black">{stats.highestScore}</div>
+              <div className="text-xs text-gray-400 print:text-gray-700 mt-1">Maior Pontuação</div>
+            </div>
+          </div>
+        </Card>
       </div>
     );
-  };
+  }
 
   return (
     <div className="space-y-3 print:space-y-2 print:bg-white max-w-full overflow-hidden">
@@ -362,27 +572,5 @@ const TournamentReport = ({ tournamentData }: TournamentReportProps) => {
 };
 
 // Helper functions
-const getFormatName = (format: string) => {
-  const formats = {
-    super8: 'Super 8',
-    doubles_groups: 'Torneio de Duplas',
-    super16: 'Super 16',
-    king_of_the_court: 'Rei da Quadra'
-  };
-  return formats[format] || format;
-};
-
-const getTeamName = (teamId: any, tournamentData: any) => {
-  if (Array.isArray(teamId)) {
-    const playerNames = teamId.map(playerId => {
-      const player = (tournamentData.players || []).find(p => p.id === playerId);
-      return player ? player.name : 'Jogador';
-    });
-    return playerNames.join(' / ');
-  }
-  
-  const team = (tournamentData.teams || []).find(t => t.id === teamId);
-  return team ? team.name : 'Time';
-};
 
 export default TournamentReport;
