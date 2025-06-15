@@ -22,6 +22,10 @@ const TournamentReport = ({ tournamentData }: TournamentReportProps) => {
     window.print();
   };
 
+  const handlePrintGameList = () => {
+    window.print(); // Se atualizar depois, pode ser customizado só para jogos
+  };
+
   const getStatistics = () => {
     const matches = tournamentData.matches || [];
     const teams = tournamentData.teams || [];
@@ -268,7 +272,8 @@ const TournamentReport = ({ tournamentData }: TournamentReportProps) => {
             <FileText className="w-6 h-6" />
             Relatório do Torneio
           </h2>
-          <div className="flex flex-col sm:flex-row gap-3">
+          {/* Botões alinhados horizontalmente */}
+          <div className="flex flex-wrap gap-3 sm:gap-2">
             <Button
               onClick={handlePrint}
               className="bg-blue-600 hover:bg-blue-700 flex items-center gap-2"
@@ -282,6 +287,14 @@ const TournamentReport = ({ tournamentData }: TournamentReportProps) => {
             >
               <Download className="w-4 h-4" />
               Download PDF
+            </Button>
+            {/* Botão verde - Imprimir lista de jogos */}
+            <Button
+              onClick={handlePrintGameList}
+              className="bg-emerald-700 hover:bg-emerald-800 flex items-center gap-2"
+            >
+              <Printer className="w-4 h-4" />
+              Imprimir lista de jogos
             </Button>
           </div>
         </div>

@@ -142,16 +142,14 @@ const Index = () => {
 
           <TabsContent value="matches">
             <div className="space-y-6">
-              {/* Apenas o GameOptionsCard, não há mais botões azuis extras */}
-              {tournamentData.status !== "finished" && (
-                <GameOptionsCard
-                  matches={tournamentData.matches}
-                  tournamentName={tournamentData.name}
-                  getTeamDisplayName={getTeamDisplayName}
-                  handlePrintMatches={handlePrintMatches}
-                  handlePrintMatchesBackup={handlePrintMatchesBackup}
-                />
-              )}
+              {/* Mostrar GameOptionsCard SEMPRE, inclusive quando FINALIZADO */}
+              <GameOptionsCard
+                matches={tournamentData.matches}
+                tournamentName={tournamentData.name}
+                getTeamDisplayName={getTeamDisplayName}
+                handlePrintMatches={handlePrintMatches}
+                handlePrintMatchesBackup={handlePrintMatchesBackup}
+              />
               {/* Manter restante da aba jogos */}
               <MatchManager 
                 tournamentData={tournamentData} 
