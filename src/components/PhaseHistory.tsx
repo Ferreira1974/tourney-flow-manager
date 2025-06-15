@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -27,7 +26,9 @@ const PhaseHistory = ({ tournamentData, phase, phaseTitle }: PhaseHistoryProps) 
     return team ? team.name : 'Time';
   };
 
+  // Ajuste: incluir grupos/chaves antes dos jogos, apenas para duplas
   const renderGroupsDisplay = () => {
+    if (tournamentData.format !== 'doubles_groups') return null;
     if (phase !== 'group_stage' || groups.length === 0) {
       return null;
     }
@@ -76,6 +77,7 @@ const PhaseHistory = ({ tournamentData, phase, phaseTitle }: PhaseHistoryProps) 
 
   return (
     <div className="space-y-6">
+      {/* Sempre mostra as chaves (grupos) para duplas na fase de grupos */}
       {renderGroupsDisplay()}
 
       <Card className="bg-gray-800 border-gray-700 p-6">
@@ -96,8 +98,8 @@ const PhaseHistory = ({ tournamentData, phase, phaseTitle }: PhaseHistoryProps) 
                 {/* Match Title */}
                 <div className="text-blue-400 font-bold text-lg min-w-[150px]">
                   {match.phase === 'final' ? 'FINAL' : 
-                   match.phase === 'third_place' ? '3º LUGAR' : 
-                   `Jogo ${index + 1}`}
+                  match.phase === 'third_place' ? '3º LUGAR' : 
+                  `Jogo ${index + 1}`}
                 </div>
                 
                 {/* Teams */}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,6 +18,7 @@ interface MatchManagerProps {
 const MatchManager = ({ tournamentData, onUpdate }: MatchManagerProps) => {
   const { toast } = useToast();
   const [scores, setScores] = useState<{ [key: string]: { score1: string; score2: string } }>({});
+  const [showPhasePanel, setShowPhasePanel] = useState(false);
 
   useEffect(() => {
     // Generate matches if needed and not already generated
@@ -321,6 +322,90 @@ const MatchManager = ({ tournamentData, onUpdate }: MatchManagerProps) => {
       'finished': 'Torneio Finalizado'
     };
     return phaseNames[phase] || 'Jogos do Torneio';
+  };
+
+  const renderGroupsByPhase = (phase: string) => {
+    // Apenas duplas
+    if (tournamentData.format !== 'doubles_groups') return null;
+    const groups = (tournamentData.groups || []).filter((g:any) =>
+      (phase === 'group_stage' && g.id.startsWith('g_group_stage_'))
+      || (phase === 'round_of_16' && g.id.startsWith('g_round_of_16_'))
+      || (phase === 'quarterfinals' && g.id.startsWith('g_quarterfinals_'))
+      || (phase === 'semifinals' && g.id.startsWith('g_semifinals_'))
+      || (phase === 'final' && g.id.startsWith('g_final_'))
+    );
+    if (!groups.length) return null;
+
+    return (
+      <div className="mb-4">
+        <h4 className="text-lg text-white font-bold mb-2">Chaves da fase ({getPhaseTitle(phase)})</h4>
+        <div className="flex gap-4 flex-wrap">
+          {groups.map((group: any) => (
+            <div key={group.id} className="bg-gray-700 border border-gray-600 rounded-lg p-4 min-w-[180px]">
+              <div className="font-bold text-blue-300 mb-2">{group.name}</div>
+              <ol className="space-y-1">
+                {group.teamIds.map((tid:string, idx:number) => {
+                  const team = (tournamentData.teams || []).find((t:any) => t.id === tid);
+                  return (
+                    <li key={tid} className="text-white text-sm">
+                      <span className="font-bold">{idx+1}.</span> {team ? team.name : 'Dupla'}
+                    </li>
+                  );
+                })}
+              </ol>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  const renderPhasesPanel = () => {
+    if (tournamentData.format !== 'doubles_groups') return null;
+    // Os nomes das fases relevantes
+    const phaseOrder = ['group_stage','round_of_16','quarterfinals','semifinals','final','third_place'];
+    return (
+      <div className="fixed inset-0 bg-black/[.85] z-40 flex items-center justify-center p-6 print:static print:bg-transparent">
+        <div className="max-w-5xl w-full bg-gray-800 border border-gray-700 rounded-xl p-6 overflow-y-auto max-h-[97vh] shadow-2xl relative">
+          <button
+            onClick={() => setShowPhasePanel(false)}
+            className="absolute top-2 right-4 bg-gray-900 text-white rounded px-3 py-1 text-xs font-medium hover:bg-gray-700 print:hidden"
+          >Fechar</button>
+          <h2 className="text-2xl font-bold mb-5 text-center text-white">Todas as Fases e Partidas</h2>
+          <div className="space-y-8">
+            {phaseOrder.map(phase => {
+              const phaseMatches = (tournamentData.matches || []).filter((m:any) => m.phase === phase);
+              if (!phaseMatches.length) return null;
+              return (
+                <div key={phase} className="rounded-lg border border-gray-700 bg-gray-700 p-4">
+                  <h3 className="text-xl font-semibold text-blue-400 mb-3">{getPhaseTitle(phase)}</h3>
+                  {renderGroupsByPhase(phase)}
+                  <div className="space-y-2">
+                    {phaseMatches.map((match:any, i:number) => (
+                      <div key={match.id} className="flex items-center justify-between bg-gray-800 rounded p-2">
+                        <div className="text-gray-200 text-sm min-w-[110px]">
+                          Jogo {i+1}
+                        </div>
+                        <div className="flex-1 text-center">
+                          <span className="font-medium text-white">{getTeamName(match.teamIds[0])}</span>
+                          <span className="text-gray-400 mx-2">vs</span>
+                          <span className="font-medium text-white">{getTeamName(match.teamIds[1])}</span>
+                        </div>
+                        <div className="text-white font-bold min-w-[70px] text-right">
+                          {match.score1 !== null && match.score2 !== null ? (
+                            <span>{match.score1} x {match.score2}</span>
+                          ): <span className="text-xs text-gray-400">Pendente</span>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </div>
+    );
   };
 
   if (matches.length === 0) {

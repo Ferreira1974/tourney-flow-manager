@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -91,6 +90,85 @@ const TournamentReport = ({ tournamentData }: TournamentReportProps) => {
     );
   }
 
+  const renderDoublesGroups = () => {
+    if (tournamentData.format !== 'doubles_groups') return null;
+    const groups = tournamentData.groups || [];
+    if (!groups.length) return null;
+    return (
+      <Card className="bg-gray-800 border-gray-700 p-3 print:bg-white print:border-gray-300 print:shadow-none">
+        <div className="flex items-center gap-3 mb-3">
+          <Users className="w-5 h-5 text-blue-400 print:text-blue-600" />
+          <h3 className="text-base print:text-lg font-bold text-white print:text-black">Formação das Chaves</h3>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {groups.map((group:any) => (
+            <div key={group.id} className="bg-gray-700 print:bg-gray-50 border rounded-lg p-3">
+              <div className="font-bold text-blue-300 mb-2">{group.name}</div>
+              <ol className="space-y-1">
+                {group.teamIds.map((tid:string, idx:number) => {
+                  const team = (tournamentData.teams || []).find((t:any) => t.id === tid);
+                  return (
+                    <li key={tid} className="text-white print:text-black text-sm">
+                      <span className="font-bold">{idx+1}.</span> {team ? team.name : 'Dupla'}
+                    </li>
+                  );
+                })}
+              </ol>
+            </div>
+          ))}
+        </div>
+      </Card>
+    );
+  };
+
+  const renderDoublesPhasesAndGames = () => {
+    if (tournamentData.format !== 'doubles_groups') return null;
+    const phaseOrder = [
+      { key: 'group_stage', label: 'Fase de Grupos' },
+      { key: 'round_of_16', label: 'Oitavas de Final' },
+      { key: 'quarterfinals', label: 'Quartas de Final' },
+      { key: 'semifinals', label: 'Semifinais' },
+      { key: 'final', label: 'Final' },
+      { key: 'third_place', label: 'Disputa 3º Lugar' }
+    ];
+    return (
+      <div className="space-y-5">
+        {phaseOrder.map(phase => {
+          const phaseMatches = (tournamentData.matches || []).filter((m:any) => m.phase === phase.key);
+          if (!phaseMatches.length) return null;
+          return (
+            <Card key={phase.key} className="bg-gray-800 border-gray-700 p-3 print:bg-white print:border-gray-300 print:shadow-none">
+              <div className="flex items-center gap-2 mb-2">
+                <Trophy className="w-4 h-4 text-blue-400 print:text-blue-600" />
+                <span className="text-base print:text-lg font-bold text-white print:text-black">{phase.label}</span>
+              </div>
+              {phase.key === 'group_stage' && renderDoublesGroups()}
+              <div className="space-y-1">
+                {phaseMatches.map((match:any, i:number) => (
+                  <div key={match.id} className="flex items-center justify-between bg-gray-700 print:bg-gray-100 p-2 rounded-md border print:border-gray-200 mb-1">
+                    <div className="text-gray-300 print:text-gray-600 text-sm min-w-[110px]">
+                      Jogo {i+1}
+                    </div>
+                    <div className="flex-1 text-center">
+                      <span className="font-medium text-white print:text-black">{getTeamName(match.teamIds[0], tournamentData)}</span>
+                      <span className="text-gray-400 print:text-gray-600 mx-2">vs</span>
+                      <span className="font-medium text-white print:text-black">{getTeamName(match.teamIds[1], tournamentData)}</span>
+                    </div>
+                    <div className="text-white print:text-black font-bold min-w-[70px] text-right">
+                      {match.score1 !== null && match.score2 !== null ? (
+                        <span>{match.score1} x {match.score2}</span>
+                      ): <span className="text-xs text-gray-400 print:text-gray-600">Pendente</span>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )
+        })}
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-3 print:space-y-2 print:bg-white max-w-full overflow-hidden">
       {/* Print Controls - Hidden on print */}
@@ -136,7 +214,7 @@ const TournamentReport = ({ tournamentData }: TournamentReportProps) => {
         </div>
       </div>
 
-      {/* Final Standings */}
+      {/* Classificação Final */}
       <Card className="bg-gray-800 border-gray-700 p-3 print:bg-white print:border-gray-300 print:shadow-none">
         <div className="flex items-center gap-3 mb-3">
           <Crown className="w-5 h-5 text-yellow-400 print:text-yellow-600" />
@@ -202,7 +280,19 @@ const TournamentReport = ({ tournamentData }: TournamentReportProps) => {
         )}
       </Card>
 
-      {/* Tournament Statistics */}
+      {/* NOVO: Chaves/grupos + todas fases e jogos duplas (abaixo classificação) */}
+      {tournamentData.format === 'doubles_groups' && (
+        <>
+          <Card className="bg-gray-900 border-gray-700 p-3 print:bg-gray-200 print:border-gray-300 print:shadow-none">
+            <h3 className="text-base print:text-lg font-bold text-white print:text-black mb-2">
+              Chaves e Fases do Torneio
+            </h3>
+            {renderDoublesPhasesAndGames()}
+          </Card>
+        </>
+      )}
+
+      {/* Estatísticas (mantido) */}
       <Card className="bg-gray-800 border-gray-700 p-3 print:bg-white print:border-gray-300 print:shadow-none">
         <div className="flex items-center gap-3 mb-3">
           <Target className="w-5 h-5 text-green-400 print:text-green-600" />
@@ -229,8 +319,8 @@ const TournamentReport = ({ tournamentData }: TournamentReportProps) => {
         </div>
       </Card>
 
-      {/* Match Results */}
-      {allMatches.length > 0 && (
+      {/* Resultados dos Jogos (mantido para outros formatos) */}
+      {tournamentData.format !== 'doubles_groups' && allMatches.length > 0 && (
         <Card className="bg-gray-800 border-gray-700 p-3 print:bg-white print:border-gray-300 print:shadow-none">
           <div className="flex items-center gap-3 mb-3">
             <Trophy className="w-5 h-5 text-blue-400 print:text-blue-600" />
