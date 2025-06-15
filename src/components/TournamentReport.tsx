@@ -1,82 +1,17 @@
+
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { FileText, Download, Trophy, Users, Target, Printer, Crown } from 'lucide-react';
-import ReportHeader from './ReportHeader';
-import DoublesGroupsFormation from './DoublesGroupsFormation';
-import DoublesGamesByPhase from './DoublesGamesByPhase';
-import DoublesMedalSummary from './DoublesMedalSummary';
-import TournamentPrintReportDialog from './TournamentPrintReportDialog';
+import { Printer, Download, Trophy, Crown } from 'lucide-react';
+import jsPDF from 'jspdf';
 
 interface TournamentReportProps {
   tournamentData: any;
 }
 
-const getTeamName = (teamId: any, tournamentData: any) => {
-  if (Array.isArray(teamId)) {
-    const playerNames = teamId.map(playerId => {
-      const player = (tournamentData.players || []).find(p => p.id === playerId);
-      return player ? player.name : 'Jogador';
-    });
-    return playerNames.join(' / ');
-  }
-  
-  const team = (tournamentData.teams || []).find(t => t.id === teamId);
-  return team ? team.name : 'Time';
-};
-
-const getStatistics = () => {
-  const matches = tournamentData.matches || [];
-  const teams = tournamentData.teams || [];
-  const players = tournamentData.players || [];
-  
-  const totalMatches = matches.length;
-  const completedMatches = matches.filter(m => m.winnerId).length;
-  const totalParticipants = teams.length > 0 ? teams.length : players.length;
-  
-  let totalPoints = 0;
-  let highestScore = 0;
-  
-  matches.forEach(match => {
-    if (match.score1 !== null && match.score2 !== null) {
-      totalPoints += match.score1 + match.score2;
-      highestScore = Math.max(highestScore, match.score1, match.score2);
-    }
-  });
-
-  const averagePointsPerMatch = completedMatches > 0 ? Math.round(totalPoints / completedMatches) : 0;
-
-  return {
-    totalMatches,
-    completedMatches,
-    totalParticipants,
-    totalPoints,
-    averagePointsPerMatch,
-    highestScore
-  };
-};
-
-const getFinalStandings = () => {
-  const participants = tournamentData.teams?.length > 0 ? tournamentData.teams : tournamentData.players || [];
-  
-  const sorted = [...participants].sort((a, b) => {
-    if (b.wins !== a.wins) return b.wins - a.wins;
-    const aDiff = (a.pointsFor || 0) - (a.pointsAgainst || 0);
-    const bDiff = (b.pointsFor || 0) - (b.pointsAgainst || 0);
-    return bDiff - aDiff;
-  });
-
-  return sorted.map((participant, index) => ({
-    ...participant,
-    position: index + 1,
-    pointsDiff: (participant.pointsFor || 0) - (participant.pointsAgainst || 0),
-    winRate: participant.gamesPlayed > 0 ? ((participant.wins || 0) / participant.gamesPlayed * 100).toFixed(1) : '0.0'
-  }));
-};
-
-const TournamentReport = ({ tournamentData }: { tournamentData: any }) => {
+const TournamentReport = ({ tournamentData }: TournamentReportProps) => {
   if (!tournamentData || !tournamentData.name) {
     return (
       <div className="space-y-8">
@@ -91,16 +26,35 @@ const TournamentReport = ({ tournamentData }: { tournamentData: any }) => {
     );
   }
 
-  // Estado dos botões de impressão/download
-  const handlePrint = () => {
-    window.print();
+  // Helpers
+  const getTeamName = (teamId: any) => {
+    if (Array.isArray(teamId)) {
+      const playerNames = teamId.map((playerId: any) => {
+        const player = (tournamentData.players || []).find((p: any) => p.id === playerId);
+        return player ? player.name : 'Jogador';
+      });
+      return playerNames.join(' / ');
+    }
+    const team = (tournamentData.teams || []).find((t: any) => t.id === teamId);
+    return team ? team.name : 'Time';
   };
 
-  const handleDownload = () => {
-    window.print(); // Download real: implementar se desejado
+  const getFinalStandings = () => {
+    const participants = tournamentData.teams?.length > 0 ? tournamentData.teams : tournamentData.players || [];
+    const sorted = [...participants].sort((a: any, b: any) => {
+      if ((b.wins || 0) !== (a.wins || 0)) return (b.wins || 0) - (a.wins || 0);
+      const aDiff = (a.pointsFor || 0) - (a.pointsAgainst || 0);
+      const bDiff = (b.pointsFor || 0) - (b.pointsAgainst || 0);
+      return bDiff - aDiff;
+    });
+    return sorted.map((participant: any, index: number) => ({
+      ...participant,
+      position: index + 1,
+      pointsDiff: (participant.pointsFor || 0) - (participant.pointsAgainst || 0),
+      winRate: participant.gamesPlayed > 0 ? ((participant.wins || 0) / participant.gamesPlayed * 100).toFixed(1) : '0.0'
+    }));
   };
 
-  // Fases ordenadas
   const phasesOrder = [
     { key: 'group_stage', label: 'Fase de Grupos' },
     { key: 'round_of_16', label: 'Oitavas de Final' },
@@ -110,19 +64,12 @@ const TournamentReport = ({ tournamentData }: { tournamentData: any }) => {
     { key: 'third_place', label: 'Disputa 3º Lugar' }
   ];
 
-  // Agrupar jogos por fase disputada
-  const gamesByPhase = (() => {
-    const matches = tournamentData.matches || [];
-    if (!matches.length) return {};
-    const grouped: Record<string, any[]> = {};
-    matches.forEach((match: any) => {
-      if (!grouped[match.phase]) grouped[match.phase] = [];
-      grouped[match.phase].push(match);
-    });
-    return grouped;
-  })();
+  const gamesByPhase: Record<string, any[]> = {};
+  (tournamentData.matches || []).forEach((match: any) => {
+    if (!gamesByPhase[match.phase]) gamesByPhase[match.phase] = [];
+    gamesByPhase[match.phase].push(match);
+  });
 
-  // Medalhistas finais
   const getFinalMedalists = () => {
     const finalMatch = (tournamentData.matches || []).find((m: any) => m.phase === "final" && m.winnerId);
     const thirdMatch = (tournamentData.matches || []).find((m: any) => m.phase === "third_place" && m.winnerId);
@@ -132,23 +79,104 @@ const TournamentReport = ({ tournamentData }: { tournamentData: any }) => {
     let third = "";
 
     if (finalMatch) {
-      champion = getTeamName(finalMatch.winnerId, tournamentData);
+      champion = getTeamName(finalMatch.winnerId);
       const teamLoser = finalMatch.teamIds.find((tid: any) => tid !== finalMatch.winnerId);
-      vice = getTeamName(teamLoser, tournamentData);
+      vice = getTeamName(teamLoser);
     }
     if (thirdMatch) {
-      third = getTeamName(thirdMatch.winnerId, tournamentData);
+      third = getTeamName(thirdMatch.winnerId);
     }
     return { champion, vice, third };
   };
 
   const { champion, vice, third } = getFinalMedalists();
   const finalStandings = getFinalStandings();
-  const stats = getStatistics();
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const handleDownload = () => {
+    const doc = new jsPDF({
+      orientation: "portrait",
+      unit: "px",
+      format: "a4"
+    });
+
+    let y = 30;
+    doc.setFontSize(20);
+    doc.text(`${tournamentData.name}`, 25, y);
+    y += 22;
+    doc.setFontSize(12);
+    doc.text('Relatório Final do Torneio', 25, y);
+    y += 10;
+
+    // Tabela de classificação
+    y += 18;
+    doc.setFontSize(13);
+    doc.text("Classificação Final", 25, y);
+    y += 10;
+    const tableStartY = y;
+    const headers = ['Pos.', 'Nome', 'Jogos', 'Vitórias', 'Pró', 'Contra', 'Saldo', 'Aproveit.'];
+    const colWidths = [25, 80, 30, 35, 30, 42, 36, 50];
+    let colX = 25;
+    headers.forEach((h, i) => {
+      doc.text(h, colX, y);
+      colX += colWidths[i];
+    });
+    y += 10;
+    finalStandings.forEach((p: any, idx: number) => {
+      colX = 25;
+      const values = [
+        `${p.position}º`, p.name, `${p.gamesPlayed || 0}`, `${p.wins || 0}`,
+        `${p.pointsFor || 0}`, `${p.pointsAgainst || 0}`,
+        `${p.pointsDiff >= 0 ? '+' : ''}${p.pointsDiff}`, `${p.winRate}%`
+      ];
+      values.forEach((val, i) => {
+        doc.text(String(val), colX, y);
+        colX += colWidths[i];
+      });
+      y += 10;
+    });
+
+    // Fases disputadas
+    phasesOrder.forEach(phase => {
+      const games = gamesByPhase[phase.key];
+      if (games && games.length > 0) {
+        y += 14;
+        doc.setFontSize(13);
+        doc.text(phase.label, 25, y);
+        y += 10;
+        doc.setFontSize(10);
+        games.forEach((match: any, i: number) => {
+          doc.text(
+            `Jogo ${i + 1}: ${getTeamName(match.teamIds[0])} vs ${getTeamName(match.teamIds[1])} - ` +
+            (match.score1 != null && match.score2 != null ? `${match.score1} x ${match.score2}` : "Pendente"),
+            32, y
+          );
+          y += 10;
+        });
+      }
+    });
+
+    // Destaques finais
+    y += 16;
+    doc.setFontSize(13);
+    doc.text("Destaques", 25, y);
+    y += 11;
+    doc.setFontSize(11);
+    doc.text(`Campeão: ${champion || '-'}`, 32, y);
+    y += 10;
+    doc.text(`Finalista: ${vice || '-'}`, 32, y);
+    y += 10;
+    doc.text(`3º Lugar: ${third || '-'}`, 32, y);
+
+    doc.save(`relatorio-torneio.pdf`);
+  };
 
   return (
     <div className="print:bg-white w-full max-w-4xl mx-auto px-1 sm:px-4 pt-2 print:p-0 text-[13px]">
-      {/* Botões de ação - só fora da impressão */}
+      {/* Botões de ação */}
       <div className="flex flex-col sm:flex-row justify-between items-center gap-2 print:hidden mb-2">
         <div />
         <div className="flex gap-2">
@@ -197,7 +225,7 @@ const TournamentReport = ({ tournamentData }: { tournamentData: any }) => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {finalStandings.map((participant, idx) => (
+              {finalStandings.map((participant: any, idx: number) => (
                 <TableRow key={participant.id} className={
                   idx === 0 ? 'bg-yellow-50'
                     : idx === 1 ? 'bg-gray-100'
@@ -246,9 +274,9 @@ const TournamentReport = ({ tournamentData }: { tournamentData: any }) => {
                        className="flex flex-row items-center justify-between rounded border border-blue-100 px-2 py-1 bg-sky-50 text-[13px]">
                     <span className="font-bold text-blue-700 min-w-[60px]">Jogo {i + 1}</span>
                     <span className="flex-1 text-center text-blue-950 font-semibold">
-                      {getTeamName(match.teamIds[0], tournamentData)}
+                      {getTeamName(match.teamIds[0])}
                       <span className="mx-2 text-blue-500 font-normal">vs</span>
-                      {getTeamName(match.teamIds[1], tournamentData)}
+                      {getTeamName(match.teamIds[1])}
                     </span>
                     <span className="font-bold text-blue-800 px-2 min-w-[60px] text-center">
                       {match.score1 !== null && match.score2 !== null ? (
@@ -290,3 +318,4 @@ const TournamentReport = ({ tournamentData }: { tournamentData: any }) => {
 };
 
 export default TournamentReport;
+
