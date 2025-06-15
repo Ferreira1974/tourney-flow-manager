@@ -149,6 +149,100 @@ const TournamentReport = ({ tournamentData }: TournamentReportProps) => {
     return { champion, vice, third };
   };
 
+  // Função para renderizar chaves + todos os jogos, apenas para doubles_groups
+  function renderDoublesPhasesAndGames() {
+    // Formação das chaves (groups)
+    const groupCards = tournamentData.groups && tournamentData.groups.length > 0 && (
+      <div className="mb-4">
+        <div className="flex items-center gap-2 mb-2">
+          <Users className="w-5 h-5 text-blue-400 print:text-blue-600" />
+          <h3 className="text-base print:text-lg font-bold text-white print:text-black">Formação das Chaves</h3>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {tournamentData.groups.map((group: any) => (
+            <div key={group.id} className="bg-gray-700 print:bg-gray-50 border rounded-lg p-3">
+              <div className="font-bold text-blue-300 mb-2">{group.name}</div>
+              <ol className="space-y-1">
+                {group.teamIds.map((tid: string, idx: number) => {
+                  const team = (tournamentData.teams || []).find((t: any) => t.id === tid);
+                  return (
+                    <li key={tid} className="text-white print:text-black text-sm">
+                      <span className="font-bold">{idx + 1}.</span> {team ? team.name : 'Dupla'}
+                    </li>
+                  );
+                })}
+              </ol>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+
+    // Todos Jogos por Fase (inclusive finais)
+    // (Mesmo phasesOrder do uso antigo)
+    const phasesOrder = [
+      { key: 'group_stage', label: 'Fase de Grupos' },
+      { key: 'round_of_16', label: 'Oitavas de Final' },
+      { key: 'quarterfinals', label: 'Quartas de Final' },
+      { key: 'semifinals', label: 'Semifinais' },
+      { key: 'final', label: 'Final' },
+      { key: 'third_place', label: 'Disputa 3º Lugar' }
+    ];
+
+    // Agrupar jogos por fase
+    const gamesByPhase = (() => {
+      const matches = tournamentData.matches || [];
+      if (!matches.length) return {};
+      // Agrupar por fase
+      const grouped: Record<string, any[]> = {};
+      matches.filter((m: any) => m.winnerId).forEach((match: any) => {
+        if (!grouped[match.phase]) grouped[match.phase] = [];
+        grouped[match.phase].push(match);
+      });
+      return grouped;
+    })();
+
+    return (
+      <>
+        {groupCards}
+        <div className="mt-2">
+          <div className="flex items-center gap-3 mb-3">
+            <Trophy className="w-5 h-5 text-blue-400 print:text-blue-600" />
+            <h3 className="text-base print:text-lg font-bold text-white print:text-black">Jogos por Fase</h3>
+          </div>
+          <div className="space-y-4">
+            {phasesOrder.map(phase => (
+              gamesByPhase[phase.key] && !!gamesByPhase[phase.key].length && (
+                <div key={phase.key}>
+                  <div className="text-base print:text-lg font-bold text-blue-400 print:text-blue-700 mb-1">{phase.label}</div>
+                  <div className="space-y-1">
+                    {gamesByPhase[phase.key].map((match: any, i: number) => (
+                      <div key={match.id} className="flex items-center justify-between bg-gray-700 print:bg-gray-100 p-2 rounded-md border print:border-gray-200 mb-1">
+                        <div className="text-gray-300 print:text-gray-600 text-sm min-w-[110px]">
+                          Jogo {i + 1}
+                        </div>
+                        <div className="flex-1 text-center">
+                          <span className="font-medium text-white print:text-black">{getTeamName(match.teamIds[0], tournamentData)}</span>
+                          <span className="text-gray-400 print:text-gray-600 mx-2">vs</span>
+                          <span className="font-medium text-white print:text-black">{getTeamName(match.teamIds[1], tournamentData)}</span>
+                        </div>
+                        <div className="text-white print:text-black font-bold min-w-[70px] text-right">
+                          {match.score1 !== null && match.score2 !== null ? (
+                            <span>{match.score1} x {match.score2}</span>
+                          ) : <span className="text-xs text-gray-400 print:text-gray-600">Pendente</span>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )
+            ))}
+          </div>
+        </div>
+      </>
+    );
+  }
+
   // NOVA exibição consolidada relatorio para "doubles_groups"
   if (tournamentData.format === 'doubles_groups') {
     const gamesByPhase = getGamesByPhase();
