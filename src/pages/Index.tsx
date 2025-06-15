@@ -408,14 +408,16 @@ const Index = () => {
 
           <TabsContent value="matches">
             <div className="space-y-6">
-              {/* REF: Novo card de opções de jogos, botões todos centralizados */}
-              <GameOptionsCard
-                matches={tournamentData.matches}
-                tournamentName={tournamentData.name}
-                getTeamDisplayName={getTeamDisplayName}
-                handlePrintMatches={handlePrintMatches}
-                handlePrintMatchesBackup={handlePrintMatchesBackup}
-              />
+              {/* Exibir Opções de Jogos apenas se o torneio NÃO está finalizado */}
+              {tournamentData.status !== 'finished' && (
+                <GameOptionsCard
+                  matches={tournamentData.matches}
+                  tournamentName={tournamentData.name}
+                  getTeamDisplayName={getTeamDisplayName}
+                  handlePrintMatches={handlePrintMatches}
+                  handlePrintMatchesBackup={handlePrintMatchesBackup}
+                />
+              )}
               {/* ... keep existing code (MatchManager component, etc) the same ... */}
               <MatchManager 
                 tournamentData={tournamentData} 
