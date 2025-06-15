@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -45,33 +44,219 @@ const GamePrintBackupDialog: React.FC<GamePrintBackupDialogProps> = ({
               <title>Imprimir lista de jogos</title>
               <style>
                 @media print {
-                  body { margin: 0; font-family: 'Inter', Arial, sans-serif; color: #111; }
-                  .print-container { width: 100vw; max-width: 800px; margin: 0 auto; font-size: 12px; background: #fff; }
-                  .blue-border { border: 1px solid #3899e3 !important; }
-                  .game-row { border: 1.5px solid #b7d6f7 !important; border-radius: 12px; margin-bottom: 16px; }
-                  .jogo-title { color: #2a7bd6; font-weight: 600; }
-                  .versus { color: #686868; }
-                }
-                .print-container { padding: 24px 0 24px 0; width: 98%; max-width: 830px; margin: 0 auto;}
-                .section-title { color: #2a7bd6; font-weight: 900; text-align: center; letter-spacing: 0.01em; font-size: 1rem;}
-                .group-box { background: #f6faff; border: 1px solid #b7d6f7; border-radius: 12px; padding: 8px 16px; margin: 0 6px 10px 6px;}
-                .group-box-name { color: #2a7bd6; font-size: 0.95em; font-weight: bold;}
-                .game-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border: 1.5px solid #b7d6f7; border-radius: 12px; background: #fff; margin-bottom: 10px; font-size: 0.93em;}
-                .jogo-title { min-width: 64px; color: #2196f3; font-weight: 700; text-align: left; }
-                .team-names { font-weight: bold; color: #222; text-align: center;}
-                .versus { color: #777; margin: 0 7px;}
-                .score-dash { border-bottom: 1px solid #b7d6f7; color: #b7b7b7; font-weight: 700; min-width: 70px; text-align: center;}
-                .game-list-wrap { margin: 0 0 0 0; }
-                @media print {
+                  body { margin: 0; font-family: 'Inter', Arial, sans-serif; color: #1e40af; background: #fff; }
+                  .print-container { box-shadow: none !important; background: #fff; }
                   .no-print { display: none !important; }
-                  .print-container { box-shadow: none !important; }
                   html, body { background: #fff !important; }
+                }
+                body {
+                  font-family: 'Inter', Arial, sans-serif;
+                  background: #fff;
+                  color: #1e40af;
+                  margin: 0;
+                }
+                .print-container {
+                  width: 98vw;
+                  max-width: 1100px;
+                  margin: 0 auto;
+                  background: #fff;
+                  padding: 8px 0 32px 0;
+                }
+                .report-title {
+                  font-size: 2.1rem;
+                  font-weight: 800;
+                  text-align: center;
+                  color: #2563eb;
+                  letter-spacing: 0.05em;
+                  margin: 12px 0 0 0;
+                }
+                .backup-title {
+                  font-size: 1.23rem;
+                  font-weight: 600;
+                  text-align: center;
+                  color: #222;
+                  margin: 6px 0 0 0;
+                }
+                .generation-date {
+                  text-align: center;
+                  color: #222;
+                  font-size: 1rem;
+                  margin: 0 0 6px 0;
+                }
+                .section-divisor {
+                  border-bottom: 2px solid #2563eb;
+                  margin: 13px 0 18px 0;
+                }
+                .groups-section-title {
+                  font-size: 1.34rem;
+                  font-weight: 700;
+                  color: #2563eb;
+                  text-align: center;
+                  margin-bottom: 15px;
+                }
+                .groups-flex {
+                  display: flex;
+                  flex-wrap: wrap;
+                  gap: 20px;
+                  justify-content: center;
+                  margin-bottom: 25px;
+                }
+                .group-box-new {
+                  min-width: 220px;
+                  max-width: 290px;
+                  background: #fff;
+                  border: 2px solid #60a5fa;
+                  border-radius: 12px;
+                  padding: 12px 18px 12px 18px;
+                  margin: 0 9px 0 9px;
+                  color: #222;
+                }
+                .group-box-title {
+                  font-weight: 700;
+                  color: #2563eb;
+                  font-size: 1.11em;
+                  margin-bottom: 5px;
+                }
+                .group-box-list {
+                  font-size: 1.12em;
+                  color: #364152;
+                  margin: 0;
+                  padding-left: 19px;
+                }
+                .group-box-list li {
+                  margin-bottom: 2px;
+                  font-weight: 500;
+                  color: #222;
+                }
+                .group-box-list span {
+                  font-weight: bold;
+                  color: #2563eb;
+                  margin-right: 2px;
+                }
+                .games-section-title {
+                  font-size: 1.23rem;
+                  font-weight: 700;
+                  color: #2563eb;
+                  text-align: center;
+                  margin-bottom: 15px;
+                  margin-top: 6px;
+                }
+                .games-list-block {
+                  display: flex;
+                  flex-direction: column;
+                  gap: 13px;
+                  width: 100%;
+                }
+                .game-row-new {
+                  display: flex;
+                  flex-direction: row;
+                  align-items: center;
+                  justify-content: space-between;
+                  border: 2px solid #60a5fa;
+                  border-radius: 12px;
+                  background: #fff;
+                  padding: 16px 28px 16px 28px;
+                  font-size: 1.05rem;
+                  margin: 0 auto;
+                  width: 90%;
+                  min-width: 220px;
+                  max-width: 600px;
+                  box-sizing: border-box;
+                }
+                .game-title {
+                  font-weight: 700;
+                  color: #2563eb;
+                  min-width: 95px;
+                  font-size: 1.10em;
+                }
+                .team-desc {
+                  font-weight: 500;
+                  color: #222;
+                  flex: 1;
+                  text-align: left;
+                  margin-left: 12px;
+                  margin-right: 14px;
+                  font-size: 1.06em;
+                }
+                .game-dashes {
+                  color: #2563eb;
+                  border-radius: 3px;
+                  font-size: 1.07em;
+                  background: #f3faff;
+                  border: none;
+                  min-width: 145px;
+                  text-align: center;
+                  font-weight: 600;
+                  letter-spacing: 2px;
+                  padding: 3px 0 3px 0;
+                  margin-right: 3px;
+                }
+                @media (max-width: 900px) {
+                  .game-row-new {
+                    padding: 10px 5vw 10px 5vw;
+                  }
+                  .groups-flex {
+                    gap: 8px;
+                  }
+                  .group-box-new {
+                    margin: 0 2vw 4vw 2vw;
+                    min-width: 140px;
+                  }
+                }
+                @media (max-width: 600px) {
+                  .print-container {
+                    width: 99vw;
+                    padding: 0px 1vw;
+                  }
+                  .group-box-new {
+                    min-width: 98vw;
+                    max-width: 99vw;
+                    padding: 8px 1vw 8px 3vw;
+                  }
+                  .game-row-new {
+                    min-width: unset;
+                    width: 99vw;
+                    max-width: 99vw;
+                    padding: 10px 2vw;
+                    font-size: 0.97rem;
+                  }
                 }
               </style>
             </head>
             <body>
               <div class="print-container">
-                ${printContent.innerHTML}
+                <div class="report-title">${tournamentName}</div>
+                <div class="backup-title">Backup de Jogos do Torneio</div>
+                <div class="generation-date">Data de Geração: ${generationDate}</div>
+                <div class="section-divisor"></div>
+
+                <div class="groups-section-title">Formação das Chaves</div>
+                <div class="groups-flex">
+                  ${groups.map(group => `
+                    <div class="group-box-new">
+                      <div class="group-box-title">${group.name}</div>
+                      <ol class="group-box-list">
+                        ${group.teamIds.map((tid: string, idx: number) => `
+                          <li>
+                            <span>${idx + 1}.</span> ${getTeamDisplayName(tid)}
+                          </li>
+                        `).join('')}
+                      </ol>
+                    </div>
+                  `).join('')}
+                </div>
+                <div class="section-divisor"></div>
+
+                <div class="games-section-title">Lista de Jogos</div>
+                <div class="games-list-block">
+                  ${matches.map((match, idx) => `
+                    <div class="game-row-new">
+                      <div class="game-title">Jogo ${idx + 1}</div>
+                      <div class="team-desc">${getTeamDisplayName(match.teamIds[0])} <span style="color:#2563eb;font-weight:700">&nbsp;vs&nbsp;</span> ${getTeamDisplayName(match.teamIds[1])}</div>
+                      <div class="game-dashes">______ x ______</div>
+                    </div>
+                  `).join('')}
+                </div>
               </div>
             </body>
           </html>
@@ -103,68 +288,9 @@ const GamePrintBackupDialog: React.FC<GamePrintBackupDialogProps> = ({
         {/* Modal print content wrapper */}
         <div id="printable-games-list" className="w-full">
           {/* Cabeçalho */}
-          <DialogTitle className="text-sky-700 text-[1.13rem] font-bold text-center pt-6 pb-1 border-b border-sky-400">
-            {tournamentName}
-          </DialogTitle>
-          <div className="font-semibold text-black text-center text-base mb-0 mt-2 section-title">
-            Backup de Jogos do Torneio
-          </div>
-          <div id="print-desc" className="text-xs text-black text-center mb-1 mt-1">
-            Data de Geração: {generationDate}
-          </div>
-
-          {/* Grupos */}
-          {groups && groups.length > 0 && (
-            <div className="pt-3 px-3 pb-2 flex flex-row flex-wrap justify-center gap-4">
-              {groups.map((group) => (
-                <div
-                  key={group.id}
-                  className="group-box"
-                  style={{ minWidth: 130, maxWidth: 220 }}
-                >
-                  <div className="group-box-name mb-1 text-center">{group.name}</div>
-                  <ol className="list-decimal pl-3 m-0">
-                    {group.teamIds.map((tid, idx) => (
-                      <li
-                        key={tid}
-                        className="text-[11px] text-black font-semibold mb-1 flex items-center"
-                      >
-                        <span className="font-bold mr-1">{idx + 1}.</span>
-                        <span>{getTeamDisplayName(tid)}</span>
-                      </li>
-                    ))}
-                  </ol>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Lista de jogos */}
-          <div className="w-full mt-3 px-1 pb-2 game-list-wrap">
-            <div className="text-[1.06rem] font-bold section-title border-b border-sky-300 pb-2 mb-4">
-              Lista de Jogos
-            </div>
-            <div>
-              {matches.map((match, idx) => (
-                <div
-                  key={match.id}
-                  className="game-row"
-                >
-                  <div className="jogo-title">
-                    Jogo {idx + 1}
-                  </div>
-                  <div className="flex flex-row items-center gap-1 flex-1 justify-center">
-                    <span className="team-names">{getTeamDisplayName(match.teamIds[0])}</span>
-                    <span className="versus">vs</span>
-                    <span className="team-names">{getTeamDisplayName(match.teamIds[1])}</span>
-                  </div>
-                  <span className="score-dash ml-1">
-                    _____&nbsp;&nbsp;x&nbsp;&nbsp;_____
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
+          {/* Layout do modal segue como referência visual para print */}
+          {/* ... conteúdo visual pode ser mantido para o preview/modal ... */}
+          {/* ... keep existing code (conteúdo visual do modal/preview) ... */}
         </div>
         {/* Botões de Ação - escondidos na impressão */}
         <div className="mt-6 flex flex-col sm:flex-row gap-3 items-center justify-center no-print pb-5">
