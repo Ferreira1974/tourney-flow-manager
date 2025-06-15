@@ -17,7 +17,6 @@ import { getStatusBadge } from '@/utils/phaseUtils';
 import GameOptionsCard from "@/components/GameOptionsCard";
 import TournamentHeader from "@/components/TournamentHeader";
 import TournamentOverviewCard from "@/components/TournamentOverviewCard";
-import GamePrintBackupButton from "@/components/GamePrintBackupButton";
 
 const Index = () => {
   const { tournamentData, updateTournament, resetTournament, isLoading } = useTournamentData();
@@ -95,16 +94,11 @@ const Index = () => {
   };
 
   const handlePrintMatches = () => {
-    // Lógica para imprimir apenas a lista de jogos
-    // Pode ser customizada conforme a implementação original
-    window.print(); // ← SUBSTITUA por lógica real, se necessário
+    window.print();
   };
 
   const handlePrintMatchesBackup = () => {
-    // Lógica para imprimir jogos/backup (como já está implementado no GamePrintBackupButton)
-    // Copie aqui o código do handlePrintMatchesBackup do GamePrintBackupButton.tsx, se necessário
-    // ... mantido conforme seu projeto ...
-    // (Recomendo centralizar toda lógica de impressão neste arquivo ou mover para um utilitário futuro)
+    // Lógica placeholder (poderia ser expandida conforme necessário)
   };
 
   return (
