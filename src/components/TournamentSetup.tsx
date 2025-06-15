@@ -51,6 +51,7 @@ const TournamentSetup = ({ onCreateTournament }: TournamentSetupProps) => {
     }
   ];
 
+  // NOVA FUNÇÃO: Retorna as opções de tamanho apenas para os formatos que não são de duplas customizadas
   const getSizeOptions = (format: string) => {
     switch (format) {
       case 'super8':
@@ -59,12 +60,7 @@ const TournamentSetup = ({ onCreateTournament }: TournamentSetupProps) => {
         return [{ value: '16', label: '16 jogadores' }];
       case 'king_of_the_court':
         return [{ value: '16', label: '16 jogadores' }];
-      case 'doubles_groups':
-        return [
-          { value: '8', label: '8 duplas (16 jogadores)' },
-          { value: '9', label: '9 duplas (18 jogadores)' },
-          { value: '12', label: '12 duplas (24 jogadores)' }
-        ];
+      // Para 'doubles_groups', agora campo livre!
       default:
         return [];
     }
@@ -72,18 +68,32 @@ const TournamentSetup = ({ onCreateTournament }: TournamentSetupProps) => {
 
   const handleFormatSelect = (formatId: string) => {
     setSelectedFormat(formatId);
+    setTournamentSize('');
+    // Para os demais, já preenche o valor fixo
     if (formatId === 'super8') {
       setTournamentSize('8');
-    } else {
-      setTournamentSize('');
+    }
+    if (formatId === 'super16' || formatId === 'king_of_the_court') {
+      setTournamentSize('16');
     }
   };
 
   const handleCreateTournament = () => {
     if (!selectedFormat || !tournamentName.trim()) return;
 
-    const sizeOptions = getSizeOptions(selectedFormat);
-    const size = tournamentSize || sizeOptions[0]?.value;
+    let size = tournamentSize;
+    if (selectedFormat !== 'doubles_groups') {
+      const sizeOptions = getSizeOptions(selectedFormat);
+      size = size || sizeOptions[0]?.value;
+    }
+
+    // no formato "Torneio Duplas" exigir pelo menos 2 duplas
+    if (selectedFormat === 'doubles_groups') {
+      const parsed = parseInt(size, 10);
+      if (isNaN(parsed) || parsed < 2 || parsed > 32) {
+        return;
+      }
+    }
 
     const tournamentData = {
       name: tournamentName.trim(),
@@ -100,7 +110,12 @@ const TournamentSetup = ({ onCreateTournament }: TournamentSetupProps) => {
     onCreateTournament(tournamentData);
   };
 
-  const isValid = selectedFormat && tournamentName.trim();
+  const isValid = selectedFormat && tournamentName.trim() &&
+    (
+      selectedFormat !== 'doubles_groups' ?
+        tournamentSize :
+        (parseInt(tournamentSize, 10) >= 2 && parseInt(tournamentSize, 10) <= 32)
+    );
 
   return (
     <Card className="bg-gray-800 border-gray-700 p-8 max-w-4xl mx-auto">
@@ -109,7 +124,7 @@ const TournamentSetup = ({ onCreateTournament }: TournamentSetupProps) => {
         <p className="text-gray-400">Escolha o formato e configure seu torneio</p>
       </div>
 
-      {/* Tournament Name - Moved to top */}
+      {/* 1. Nome torneio */}
       <div className="mb-8">
         <h3 className="text-xl font-semibold text-white mb-4">1. Nome do Torneio</h3>
         <Input
@@ -120,7 +135,7 @@ const TournamentSetup = ({ onCreateTournament }: TournamentSetupProps) => {
         />
       </div>
 
-      {/* Format Selection - Now step 2 */}
+      {/* 2. Formato */}
       <div className="mb-8">
         <h3 className="text-xl font-semibold text-white mb-4">2. Escolha o Formato</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -163,7 +178,7 @@ const TournamentSetup = ({ onCreateTournament }: TournamentSetupProps) => {
         </div>
       </div>
 
-      {/* Number of Participants - Now step 3 */}
+      {/* 3. Número de Participantes */}
       {selectedFormat && (
         <div className="mb-8">
           <h3 className="text-xl font-semibold text-white mb-4">3. Número de Participantes</h3>
@@ -171,24 +186,35 @@ const TournamentSetup = ({ onCreateTournament }: TournamentSetupProps) => {
             <div className="bg-gray-600 border border-gray-500 rounded-md px-4 py-3 text-gray-300 text-lg">
               8 jogadores (fixo)
             </div>
-          ) : (
-            <Select value={tournamentSize} onValueChange={setTournamentSize}>
-              <SelectTrigger className="bg-gray-700 border-gray-600 text-white text-lg p-4">
-                <SelectValue placeholder="Selecione o tamanho" />
-              </SelectTrigger>
-              <SelectContent className="bg-gray-700 border-gray-600">
-                {getSizeOptions(selectedFormat).map((option) => (
-                  <SelectItem key={option.value} value={option.value} className="text-white">
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
+          ) : selectedFormat === 'super16' || selectedFormat === 'king_of_the_court' ? (
+            <div className="bg-gray-600 border border-gray-500 rounded-md px-4 py-3 text-gray-300 text-lg">
+              16 jogadores (fixo)
+            </div>
+          ) : selectedFormat === 'doubles_groups' ? (
+            <div>
+              <Input
+                type="number"
+                min={2}
+                max={32}
+                value={tournamentSize}
+                onChange={e => {
+                  const val = e.target.value;
+                  // se maior que 32, limita
+                  if (parseInt(val, 10) > 32) setTournamentSize("32");
+                  else setTournamentSize(val.replace(/^0+/, '')); // não deixa zeros à esquerda
+                }}
+                placeholder="Informe o número de duplas (min: 2, max: 32)"
+                className="bg-gray-700 border-gray-600 text-white text-lg p-4"
+              />
+              <div className="text-xs text-gray-400 mt-1">
+                Escolha quantas duplas deseja para o torneio (mínimo 2, máximo 32).
+              </div>
+            </div>
+          ) : null}
         </div>
       )}
 
-      {/* Create Button */}
+      {/* Botão Criar */}
       <div className="text-center">
         <Button
           onClick={handleCreateTournament}
