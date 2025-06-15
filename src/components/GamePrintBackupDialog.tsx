@@ -32,14 +32,60 @@ const GamePrintBackupDialog: React.FC<GamePrintBackupDialogProps> = ({
   getTeamDisplayName,
   matches,
 }) => {
+  // Chama impressão apenas do dialog
   const handlePrint = () => {
-    window.print();
+    // Cria um iframe invisível, imprime só o conteúdo do modal
+    const printContent = document.getElementById("printable-games-list");
+    if (printContent) {
+      const printWindow = window.open("", "_blank", "width=900,height=700");
+      if (printWindow) {
+        printWindow.document.write(`
+          <html>
+            <head>
+              <title>Imprimir lista de jogos</title>
+              <style>
+                @media print {
+                  body { margin: 0; font-family: 'Inter', Arial, sans-serif; color: #111; }
+                  .print-container { width: 100vw; max-width: 800px; margin: 0 auto; font-size: 12px; background: #fff; }
+                  .blue-border { border: 1px solid #3899e3 !important; }
+                  .game-row { border: 1.5px solid #b7d6f7 !important; border-radius: 12px; margin-bottom: 16px; }
+                  .jogo-title { color: #2a7bd6; font-weight: 600; }
+                  .versus { color: #686868; }
+                }
+                .print-container { padding: 24px 0 24px 0; width: 98%; max-width: 830px; margin: 0 auto;}
+                .section-title { color: #2a7bd6; font-weight: 900; text-align: center; letter-spacing: 0.01em; font-size: 1rem;}
+                .group-box { background: #f6faff; border: 1px solid #b7d6f7; border-radius: 12px; padding: 8px 16px; margin: 0 6px 10px 6px;}
+                .group-box-name { color: #2a7bd6; font-size: 0.95em; font-weight: bold;}
+                .game-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border: 1.5px solid #b7d6f7; border-radius: 12px; background: #fff; margin-bottom: 10px; font-size: 0.93em;}
+                .jogo-title { min-width: 64px; color: #2196f3; font-weight: 700; text-align: left; }
+                .team-names { font-weight: bold; color: #222; text-align: center;}
+                .versus { color: #777; margin: 0 7px;}
+                .score-dash { border-bottom: 1px solid #b7d6f7; color: #b7b7b7; font-weight: 700; min-width: 70px; text-align: center;}
+                .game-list-wrap { margin: 0 0 0 0; }
+                @media print {
+                  .no-print { display: none !important; }
+                  .print-container { box-shadow: none !important; }
+                  html, body { background: #fff !important; }
+                }
+              </style>
+            </head>
+            <body>
+              <div class="print-container">
+                ${printContent.innerHTML}
+              </div>
+            </body>
+          </html>
+        `);
+        printWindow.document.close();
+        printWindow.focus();
+        printWindow.print();
+        printWindow.close();
+      }
+    }
   };
 
   const handleDownload = () => {
-    // A solução mais simples e multiplataforma para download do "arquivo" é instruir o usuário a usar o print-to-pdf do navegador.
-    // Opcionalmente você pode implementar uma exportação de PDF com jsPDF aqui.
-    window.print();
+    handlePrint();
   };
 
   const handleClose = () => {
@@ -49,94 +95,89 @@ const GamePrintBackupDialog: React.FC<GamePrintBackupDialogProps> = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="w-full max-w-3xl bg-white border border-blue-500 p-0 print:!block print:!static print:w-full print:!max-w-full print:border-none text-sm"
+        className="w-full max-w-3xl bg-white border border-sky-400 p-0 print:!block print:!static print:w-full print:!max-w-full print:border-none text-[13px] md:text-sm leading-tight"
         style={{ fontFamily: "inherit" }}
+        id="game-print-dialog"
+        aria-describedby="print-desc"
       >
-        {/* DialogTitle para acessibilidade */}
-        <DialogTitle className="text-blue-700 text-lg font-bold text-center pt-8 pb-2 border-b border-blue-500">
-          {tournamentName}
-        </DialogTitle>
-        {/* Descrição e Data */}
-        <div className="font-semibold text-black text-center text-base mt-1 mb-0">
-          Backup de Jogos do Torneio
-        </div>
-        <div className="text-xs text-black text-center mb-1 mt-1">
-          Data de Geração: {generationDate}
-        </div>
+        {/* Modal print content wrapper */}
+        <div id="printable-games-list" className="w-full">
+          {/* Cabeçalho */}
+          <DialogTitle className="text-sky-700 text-[1.13rem] font-bold text-center pt-6 pb-1 border-b border-sky-400">
+            {tournamentName}
+          </DialogTitle>
+          <div className="font-semibold text-black text-center text-base mb-0 mt-2 section-title">
+            Backup de Jogos do Torneio
+          </div>
+          <div id="print-desc" className="text-xs text-black text-center mb-1 mt-1">
+            Data de Geração: {generationDate}
+          </div>
 
-        {/* Grupos */}
-        {groups && groups.length > 0 && (
-          <div className="pt-4 px-3 pb-2">
-            <h2 className="text-base font-bold text-blue-700 text-center mb-4">Formação das Chaves</h2>
-            <div className="flex flex-col md:flex-row gap-4 justify-center items-stretch">
+          {/* Grupos */}
+          {groups && groups.length > 0 && (
+            <div className="pt-3 px-3 pb-2 flex flex-row flex-wrap justify-center gap-4">
               {groups.map((group) => (
                 <div
                   key={group.id}
-                  className="border border-blue-200 rounded-xl bg-white px-4 py-3 min-w-[160px] flex-1 flex-shrink"
-                  style={{ maxWidth: 260 }}
+                  className="group-box"
+                  style={{ minWidth: 130, maxWidth: 220 }}
                 >
-                  <div className="text-sm font-bold text-blue-700 mb-2 text-center">{group.name}</div>
-                  <ol className="list-decimal pl-3">
+                  <div className="group-box-name mb-1 text-center">{group.name}</div>
+                  <ol className="list-decimal pl-3 m-0">
                     {group.teamIds.map((tid, idx) => (
                       <li
                         key={tid}
-                        className="text-xs text-black font-semibold mb-1 flex items-center"
+                        className="text-[11px] text-black font-semibold mb-1 flex items-center"
                       >
                         <span className="font-bold mr-1">{idx + 1}.</span>
-                        <span>
-                          {getTeamDisplayName(tid)}
-                        </span>
+                        <span>{getTeamDisplayName(tid)}</span>
                       </li>
                     ))}
                   </ol>
                 </div>
               ))}
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Lista de jogos */}
-        <div className="w-full mt-5 px-3 pb-2">
-          <h2 className="text-lg font-bold text-blue-700 text-center border-b border-blue-500 pb-2 mb-5">Lista de Jogos</h2>
-          <div className="flex flex-col gap-3">
-            {matches.map((match, idx) => (
-              <div
-                key={match.id}
-                className="border border-blue-100 rounded-xl bg-white flex flex-col md:flex-row justify-between items-center py-3 px-0 md:px-5 shadow-none text-xs"
-                style={{ borderWidth: 2 }}
-              >
-                <div className="font-bold text-blue-700 min-w-[84px] px-2 py-1 text-center text-xs">
-                  Jogo {idx + 1}
-                </div>
-                <div className="flex-1 flex flex-col md:flex-row items-center justify-center gap-1 text-xs">
-                  <span className="font-semibold text-black min-w-[92px] text-center">
-                    {getTeamDisplayName(match.teamIds[0])}
+          {/* Lista de jogos */}
+          <div className="w-full mt-3 px-1 pb-2 game-list-wrap">
+            <div className="text-[1.06rem] font-bold section-title border-b border-sky-300 pb-2 mb-4">
+              Lista de Jogos
+            </div>
+            <div>
+              {matches.map((match, idx) => (
+                <div
+                  key={match.id}
+                  className="game-row"
+                >
+                  <div className="jogo-title">
+                    Jogo {idx + 1}
+                  </div>
+                  <div className="flex flex-row items-center gap-1 flex-1 justify-center">
+                    <span className="team-names">{getTeamDisplayName(match.teamIds[0])}</span>
+                    <span className="versus">vs</span>
+                    <span className="team-names">{getTeamDisplayName(match.teamIds[1])}</span>
+                  </div>
+                  <span className="score-dash ml-1">
+                    _____&nbsp;&nbsp;x&nbsp;&nbsp;_____
                   </span>
-                  <span className="font-medium text-gray-700 mx-2">vs</span>
-                  <span className="font-semibold text-black min-w-[92px] text-center">
-                    {getTeamDisplayName(match.teamIds[1])}
-                  </span>
                 </div>
-                <div className="flex flex-row gap-2 items-center min-w-[120px] justify-end px-2 mt-2 md:mt-0">
-                  <span className="text-xs border-b border-blue-200 px-5 text-[#bbb] tracking-wide">_____ x _____</span>
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
-
         {/* Botões de Ação - escondidos na impressão */}
-        <div className="mt-7 flex flex-col sm:flex-row gap-3 items-center justify-center print:hidden pb-5">
+        <div className="mt-6 flex flex-col sm:flex-row gap-3 items-center justify-center no-print pb-5">
           <Button
             onClick={handlePrint}
-            className="bg-blue-600 hover:bg-blue-700 flex items-center gap-2 min-w-[150px]"
+            className="bg-sky-700 hover:bg-sky-800 text-white flex items-center gap-2 min-w-[165px] text-[13px] font-semibold"
           >
             <Printer className="w-4 h-4" />
             Imprimir lista de jogos
           </Button>
           <Button
             onClick={handleDownload}
-            className="bg-green-600 hover:bg-green-700 flex items-center gap-2 min-w-[170px]"
+            className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2 min-w-[165px] text-[13px] font-semibold"
           >
             <Download className="w-4 h-4" />
             Download do Arquivo
@@ -144,7 +185,7 @@ const GamePrintBackupDialog: React.FC<GamePrintBackupDialogProps> = ({
           <Button
             onClick={handleClose}
             variant="outline"
-            className="flex items-center gap-2 min-w-[140px] border border-blue-500"
+            className="flex items-center gap-2 min-w-[120px] border border-sky-500 text-[13px]"
           >
             <X className="w-4 h-4" />
             Fechar Arquivo
@@ -156,4 +197,3 @@ const GamePrintBackupDialog: React.FC<GamePrintBackupDialogProps> = ({
 };
 
 export default GamePrintBackupDialog;
-
