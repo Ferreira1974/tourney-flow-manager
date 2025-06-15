@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,7 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { Trophy, Check, Clock } from 'lucide-react';
-import { generateMatches, getQualifiedTeams } from '@/utils/tournamentLogic';
+import { generateMatches, getQualifiedTeams, getNextPhase } from '@/utils/tournamentLogic';
+import { getPhaseTitle } from '@/utils/phaseUtils';
 
 interface MatchManagerProps {
   tournamentData: any;
