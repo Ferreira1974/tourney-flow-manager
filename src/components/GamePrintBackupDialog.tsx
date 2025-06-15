@@ -1,4 +1,3 @@
-
 import React, { useRef } from "react";
 
 // Shadcn dialog para o modal
@@ -44,8 +43,17 @@ const GamePrintBackupDialog: React.FC<GamePrintBackupDialogProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         className="w-full max-w-4xl bg-white border border-blue-400 print:!block print:!static print:w-full print:!max-w-full print:border-none"
-        hideClose
       >
+        {/* Hide the close button on print using print:hidden */}
+        <button
+          type="button"
+          aria-label="Close"
+          onClick={() => onOpenChange(false)}
+          className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground print:hidden"
+        >
+          <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none"><path d="M3.5 3.5l9 9m-9 0l9-9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
+          <span className="sr-only">Close</span>
+        </button>
         <div className="p-0 print:p-0">
           {/* Cabeçalho do backup */}
           <div className="text-center border-b border-blue-500 pb-2 mb-6">
