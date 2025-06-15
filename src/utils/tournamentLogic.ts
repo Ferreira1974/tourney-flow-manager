@@ -156,8 +156,7 @@ const generateDoublesEliminationMatches = (qualifiedTeams: any[], phase: string)
       });
     }
   } else if (phase === "semifinals" && qualifiedTeams.length === 4) {
-    // CRUZAMENTO OLÍMPICO: 1º x 4º, 2º x 3º
-    // (Importante: tanto para exibição quanto geração dos jogos)
+    // CRUZAMENTO OLÍMPICO: 1º x 4º, 2º x 3º (corrigido para NUNCA criar 3 jogos!)
     matches.push({
       id: `m_semifinals_${matchIdCounter++}`,
       phase: "semifinals",

@@ -27,7 +27,7 @@ const GameOptionsCard: React.FC<GameOptionsCardProps> = ({
         <FileText className="w-5 h-5" />
         Opções de Jogos
       </h3>
-      {/* Botões de impressão lado a lado sempre, nomeados conforme solicitado */}
+      {/* Somente o botão verde de imprimir */}
       <div className="flex flex-row justify-center gap-3 flex-wrap">
         <Button
           onClick={handlePrintMatches}
@@ -36,14 +36,6 @@ const GameOptionsCard: React.FC<GameOptionsCardProps> = ({
         >
           <Printer className="w-4 h-4" />
           Imprimir lista de jogos
-        </Button>
-        <Button
-          onClick={handlePrintMatchesBackup}
-          size="sm"
-          className="bg-blue-600 hover:bg-blue-700 flex items-center gap-2"
-        >
-          <Printer className="w-4 h-4" />
-          Imprimir jogos / backup
         </Button>
       </div>
     </Card>
