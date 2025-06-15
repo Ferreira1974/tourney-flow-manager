@@ -246,23 +246,23 @@ const Index = () => {
         `;
       }
 
-      // Bloco dos jogos, layout aprimorado (o mesmo já existente)
+      // Bloco dos jogos, agora em lista sequencial "um por linha"
       let matchesHTML = `
         <h2 style="text-align:center;font-size:18px;color:#2563eb;margin-bottom:6px;">
           Lista de Jogos
         </h2>
-        <div class="matches-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:960px;margin:0 auto;">
+        <div class="matches-list" style="max-width:700px;margin:0 auto;">
       `;
       matches.forEach((match, idx) => {
         const team1Name = getTeamDisplayName(match.teamIds[0]);
         const team2Name = getTeamDisplayName(match.teamIds[1]);
         matchesHTML += `
-          <div class="match-box" style="background:#f1f5fa;border:1.5px solid #93c5fd;border-radius:10px;min-height:56px;padding:10px 16px;display:flex;flex-direction:column;justify-content:center;box-shadow:0 2px 6px rgba(37,99,235,0.06);">
-            <div class="match-header" style="font-weight:bold;color:#2563eb;font-size:14px;margin-bottom:5px;">Jogo ${idx + 1}</div>
-            <div class="match-teams" style="font-weight:500;color:#222f;font-size:15px;margin-bottom:4px;word-break:break-word;">
+          <div class="match-row" style="background:#f1f5fa;border:1.5px solid #93c5fd;border-radius:8px;min-height:44px;padding:10px 20px;display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+            <div class="match-number" style="font-weight:bold;color:#2563eb;font-size:15px;">Jogo ${idx + 1}</div>
+            <div class="match-teams" style="font-weight:500;color:#222f;font-size:15px;flex:1;text-align:center;">
               ${team1Name} <span style="margin:0 6px;color:#666;">vs</span> ${team2Name}
             </div>
-            <div class="match-score" style="color:#444;font-size:13px;font-style:italic;letter-spacing:2px;margin-top:1px;">
+            <div class="match-score" style="color:#444;font-size:13px;font-style:italic;letter-spacing:2px;min-width:92px;text-align:right;">
               _____ x _____
             </div>
           </div>
@@ -286,15 +286,25 @@ const Index = () => {
               .header { text-align:center;margin-bottom:24px;border-bottom:2px solid #2563eb;padding-bottom:10px;}
               .header h2 { font-size:17px;color:#323232;margin:0 0 4px 0;}
               .header p { color:#888;font-size:13px;margin:0;}
-              @media (max-width:700px) { .matches-grid { grid-template-columns:1fr !important;}}
+              .matches-list { max-width:700px; margin:0 auto; }
+              .match-row { background:#f1f5fa;border:1.5px solid #93c5fd;border-radius:8px;min-height:44px;padding:10px 20px;display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+              .match-number { font-weight:bold;color:#2563eb;font-size:15px; }
+              .match-teams { font-weight:500;color:#222f;font-size:15px;flex:1;text-align:center; }
+              .match-score { color:#444;font-size:13px;font-style:italic;letter-spacing:2px;min-width:92px;text-align:right; }
+              @media (max-width:700px) {
+                .matches-list { max-width:98vw; }
+                .match-row { padding:7px 4vw; flex-direction:column; align-items:flex-start; gap:3px;}
+                .match-teams { text-align:left; }
+                .match-score { text-align:left; min-width:unset;}
+              }
               @media print {
                 body { margin:0px;}
                 h1 {font-size:22px;}
                 .header {border-bottom:1px solid #2563eb; margin-bottom:16px;}
                 .groups-header h2, .matches-header { font-size:16px; }
-                .match-box { font-size:12px;padding:7px 9px;}
-                .matches-grid { grid-gap:9px;}
-                .matches-summary { font-size:12px;}
+                .match-row { font-size:11.5px;padding:6px 7px;margin-bottom:5px; }
+                .matches-list { max-width:100vw; }
+                .matches-summary { font-size:12px;margin-top:20px;}
               }
             </style>
           </head>
