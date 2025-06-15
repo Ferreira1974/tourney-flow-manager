@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { Trophy, Check, Clock } from 'lucide-react';
+import { Trophy, Check, Clock, Users } from 'lucide-react';
 import { generateMatches, getQualifiedTeams, getNextPhase } from '@/utils/tournamentLogic';
 import { getPhaseTitle } from '@/utils/phaseUtils';
 
@@ -180,6 +180,48 @@ const MatchManager = ({ tournamentData, onUpdate }: MatchManagerProps) => {
     return team ? team.name : 'Time';
   };
 
+  const renderGroupsDisplay = () => {
+    if (tournamentData.format !== 'doubles_groups' || tournamentData.status !== 'group_stage') {
+      return null;
+    }
+
+    const groups = tournamentData.groups || [];
+    if (groups.length === 0) return null;
+
+    return (
+      <Card className="bg-gray-800 border-gray-700 p-6 mb-6">
+        <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+          <Users className="w-6 h-6 text-blue-400" />
+          Formação das Chaves
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {groups.map((group, index) => (
+            <div key={group.id} className="bg-gray-700 border border-gray-600 rounded-lg p-4">
+              <h4 className="text-lg font-bold text-blue-300 mb-3 text-center">
+                {group.name}
+              </h4>
+              <div className="space-y-2">
+                {group.teamIds.map((teamId, teamIndex) => {
+                  const team = (tournamentData.teams || []).find(t => t.id === teamId);
+                  return (
+                    <div key={teamId} className="flex items-center gap-2 p-2 bg-gray-600 rounded">
+                      <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
+                        {teamIndex + 1}
+                      </div>
+                      <span className="text-white font-medium">
+                        {team ? team.name : 'Dupla'}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      </Card>
+    );
+  };
+
   const getPhaseTitle = (phase: string) => {
     const phaseNames = {
       'group_stage': 'Fase de Grupos',
@@ -226,6 +268,9 @@ const MatchManager = ({ tournamentData, onUpdate }: MatchManagerProps) => {
 
   return (
     <div className="space-y-6">
+      {/* Render groups display for doubles tournament in group stage */}
+      {renderGroupsDisplay()}
+
       <Card className="bg-gray-800 border-gray-700 p-6">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-white flex items-center gap-2">

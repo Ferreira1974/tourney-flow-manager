@@ -8,7 +8,12 @@ export const generateMatches = (tournamentData: any) => {
       matches = generateSuper8Matches(players || []);
       break;
     case 'doubles_groups':
-      matches = generateDoublesChampionshipMatches(teams || [], status);
+      const result = generateDoublesChampionshipMatches(teams || [], status);
+      matches = result.matches;
+      // Update tournament data with groups if they were created
+      if (result.groups && result.groups.length > 0) {
+        tournamentData.groups = result.groups;
+      }
       break;
     case 'super16':
       matches = generateSuper16Matches(teams || []);
@@ -71,18 +76,18 @@ const generateDoublesChampionshipMatches = (teams: any[], status: string) => {
   if (status === 'group_stage') {
     return generateDoublesGroupStageMatches(teams);
   } else if (status === 'round_of_16') {
-    return generateDoublesEliminationMatches(teams, 'round_of_16');
+    return { matches: generateDoublesEliminationMatches(teams, 'round_of_16'), groups: [] };
   } else if (status === 'quarterfinals') {
-    return generateDoublesEliminationMatches(teams, 'quarterfinals');
+    return { matches: generateDoublesEliminationMatches(teams, 'quarterfinals'), groups: [] };
   } else if (status === 'semifinals') {
-    return generateDoublesEliminationMatches(teams, 'semifinals');
+    return { matches: generateDoublesEliminationMatches(teams, 'semifinals'), groups: [] };
   } else if (status === 'final') {
-    return generateDoublesEliminationMatches(teams, 'final');
+    return { matches: generateDoublesEliminationMatches(teams, 'final'), groups: [] };
   } else if (status === 'third_place') {
-    return generateDoublesEliminationMatches(teams, 'third_place');
+    return { matches: generateDoublesEliminationMatches(teams, 'third_place'), groups: [] };
   }
   
-  return [];
+  return { matches: [], groups: [] };
 };
 
 const generateDoublesGroupStageMatches = (teams: any[]) => {
@@ -115,7 +120,9 @@ const generateDoublesGroupStageMatches = (teams: any[]) => {
     groups[index % numGroups].teamIds.push(team.id);
   });
 
-  return generateRoundRobinMatches(groups, 'group_stage');
+  const matches = generateRoundRobinMatches(groups, 'group_stage');
+  
+  return { matches, groups };
 };
 
 const generateDoublesEliminationMatches = (qualifiedTeams: any[], phase: string) => {
