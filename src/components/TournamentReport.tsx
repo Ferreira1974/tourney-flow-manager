@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -198,8 +197,8 @@ const TournamentReport = ({ tournamentData }: TournamentReportProps) => {
       {/* Título do torneio */}
       <div className="text-center mt-1 mb-3">
         <h1 className="font-extrabold text-2xl sm:text-3xl text-blue-800 print:text-blue-800 mb-1 uppercase tracking-tight">{tournamentData.name}</h1>
-        <h2 className="text-[1.15rem] font-bold text-gray-800 print:text-black">Relatório Final do Torneio</h2>
-        <p className="text-xs text-gray-500 font-medium print:text-black mt-0">
+        <h2 className="text-[1.35rem] font-bold text-indigo-700 print:text-indigo-700 mb-1">Relatório Final do Torneio</h2>
+        <p className="text-[1.1rem] font-semibold text-indigo-700 print:text-indigo-700 mt-0">
           Data: {new Date(tournamentData.createdAt || Date.now()).toLocaleDateString('pt-BR', {day: '2-digit', month: '2-digit', year: 'numeric'})}
         </p>
       </div>
@@ -296,7 +295,7 @@ const TournamentReport = ({ tournamentData }: TournamentReportProps) => {
       {/* Medalhistas finais */}
       <div className="my-5 flex flex-col items-center">
         <div className="border-2 border-blue-700 rounded-xl bg-blue-50 p-3 w-full max-w-xl">
-          <h3 className="text-lg font-black text-blue-800 text-center uppercase mb-2">Destaques Finais</h3>
+          <h3 className="text-[1.35rem] font-black text-indigo-700 text-center uppercase mb-2">Destaques Finais</h3>
           <div className="flex flex-col sm:flex-row justify-between gap-3">
             <div className="flex-1 text-center">
               <span className="block text-blue-700 font-bold text-sm mb-1">Campeão</span>
@@ -318,4 +317,3 @@ const TournamentReport = ({ tournamentData }: TournamentReportProps) => {
 };
 
 export default TournamentReport;
-
