@@ -152,14 +152,19 @@ const MatchManager = ({ tournamentData, onUpdate }: MatchManagerProps) => {
       description: "Resultado registrado com sucesso!",
     });
 
-    // Check if all matches are completed to update tournament status to finished
-    const allMatchesCompleted = updatedMatches.every(match => match.winnerId);
-    if (allMatchesCompleted && tournamentData.status !== 'finished') {
-      onUpdate({ status: 'finished' });
-      toast({
-        title: "Torneio finalizado",
-        description: "Todos os jogos foram concluídos! Verifique a classificação final.",
-      });
+    // Check if current phase is completed for doubles tournament
+    if (tournamentData.format === 'doubles_groups') {
+      checkDoublesPhaseCompletion(updatedMatches, tournamentData, onUpdate, toast);
+    } else {
+      // Check if all matches are completed to update tournament status to finished
+      const allMatchesCompleted = updatedMatches.every(match => match.winnerId);
+      if (allMatchesCompleted && tournamentData.status !== 'finished') {
+        onUpdate({ status: 'finished' });
+        toast({
+          title: "Torneio finalizado",
+          description: "Todos os jogos foram concluídos! Verifique a classificação final.",
+        });
+      }
     }
   };
 
@@ -179,6 +184,11 @@ const MatchManager = ({ tournamentData, onUpdate }: MatchManagerProps) => {
   const getPhaseTitle = (phase: string) => {
     const phaseNames = {
       'group_stage': 'Fase de Grupos',
+      'round_of_16': 'Oitavas de Final',
+      'quarterfinals': 'Quartas de Final',
+      'semifinals': 'Semifinais',
+      'final': 'Final',
+      'third_place': 'Disputa de 3º Lugar',
       'phase1_groups': 'Fase 1 - Grupos',
       'phase2_playoffs': 'Fase 2 - Playoffs',  
       'phase3_final': 'Fase 3 - Final',
@@ -297,6 +307,100 @@ const MatchManager = ({ tournamentData, onUpdate }: MatchManagerProps) => {
       </Card>
     </div>
   );
+};
+
+const checkDoublesPhaseCompletion = (matches: any[], tournamentData: any, onUpdate: any, toast: any) => {
+  const currentPhaseMatches = matches.filter(match => match.phase === tournamentData.status);
+  const completedMatches = currentPhaseMatches.filter(match => match.winnerId);
+  
+  // Check if current phase is completed
+  if (completedMatches.length === currentPhaseMatches.length && currentPhaseMatches.length > 0) {
+    if (tournamentData.status === 'group_stage') {
+      // Advance to elimination phase
+      const qualifiedTeams = getQualifiedTeams(tournamentData, 'group_stage');
+      const nextPhase = getNextPhase('group_stage', qualifiedTeams.length);
+      
+      if (nextPhase !== 'finished') {
+        const newMatches = generateMatches({ ...tournamentData, status: nextPhase, teams: qualifiedTeams });
+        onUpdate({ 
+          status: nextPhase,
+          matches: [...matches, ...newMatches]
+        });
+        
+        toast({
+          title: "Fase concluída",
+          description: `Avançando para ${getPhaseTitle(nextPhase)}`,
+        });
+      }
+    } else if (['round_of_16', 'quarterfinals'].includes(tournamentData.status)) {
+      // Advance to next elimination round
+      const winners = matches
+        .filter(match => match.phase === tournamentData.status && match.winnerId)
+        .map(match => {
+          const teams = tournamentData.teams || [];
+          return teams.find(team => team.id === match.winnerId);
+        })
+        .filter(Boolean);
+      
+      const nextPhase = getNextPhase(tournamentData.status, winners.length);
+      
+      if (nextPhase !== 'finished') {
+        const newMatches = generateMatches({ ...tournamentData, status: nextPhase, teams: winners });
+        onUpdate({ 
+          status: nextPhase,
+          matches: [...matches, ...newMatches]
+        });
+        
+        toast({
+          title: "Fase concluída",
+          description: `Avançando para ${getPhaseTitle(nextPhase)}`,
+        });
+      }
+    } else if (tournamentData.status === 'semifinals') {
+      // Create final and third place matches
+      const winners = matches
+        .filter(match => match.phase === 'semifinals' && match.winnerId)
+        .map(match => {
+          const teams = tournamentData.teams || [];
+          return teams.find(team => team.id === match.winnerId);
+        })
+        .filter(Boolean);
+      
+      const losers = matches
+        .filter(match => match.phase === 'semifinals' && match.winnerId)
+        .map(match => {
+          const teams = tournamentData.teams || [];
+          const loserId = match.teamIds.find(id => id !== match.winnerId);
+          return teams.find(team => team.id === loserId);
+        })
+        .filter(Boolean);
+      
+      const finalMatches = generateMatches({ ...tournamentData, status: 'final', teams: winners });
+      const thirdPlaceMatches = generateMatches({ ...tournamentData, status: 'third_place', teams: losers });
+      
+      onUpdate({ 
+        status: 'final',
+        matches: [...matches, ...finalMatches, ...thirdPlaceMatches]
+      });
+      
+      toast({
+        title: "Semifinais concluídas",
+        description: "Final e disputa de 3º lugar criadas!",
+      });
+    } else if (tournamentData.status === 'final') {
+      // Check if both final and third place are completed
+      const finalCompleted = matches.some(match => match.phase === 'final' && match.winnerId);
+      const thirdPlaceCompleted = matches.some(match => match.phase === 'third_place' && match.winnerId);
+      
+      if (finalCompleted && thirdPlaceCompleted) {
+        onUpdate({ status: 'finished' });
+        toast({
+          title: "Torneio finalizado",
+          description: "Parabéns! O torneio foi concluído com sucesso.",
+        });
+      }
+    }
+  }
 };
 
 export default MatchManager;

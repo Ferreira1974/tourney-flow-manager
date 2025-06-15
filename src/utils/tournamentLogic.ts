@@ -1,4 +1,3 @@
-
 export const generateMatches = (tournamentData: any) => {
   const { format, teams, players, status } = tournamentData;
   
@@ -9,7 +8,7 @@ export const generateMatches = (tournamentData: any) => {
       matches = generateSuper8Matches(players || []);
       break;
     case 'doubles_groups':
-      matches = generateDoublesGroupMatches(teams || [], tournamentData.size, status);
+      matches = generateDoublesChampionshipMatches(teams || [], status);
       break;
     case 'super16':
       matches = generateSuper16Matches(teams || []);
@@ -68,63 +67,120 @@ const generateSuper8Matches = (players: any[]) => {
   return matches;
 };
 
-const generateDoublesGroupMatches = (teams: any[], size: number, status: string) => {
+const generateDoublesChampionshipMatches = (teams: any[], status: string) => {
   if (status === 'group_stage') {
-    const groupSize = size === 9 ? 3 : 4;
-    const numGroups = Math.ceil(teams.length / groupSize);
-    
-    // Shuffle teams and distribute into groups
-    const shuffledTeams = [...teams].sort(() => Math.random() - 0.5);
-    const groups: any[] = [];
-    
-    for (let i = 0; i < numGroups; i++) {
-      groups.push({
-        id: `g_group_stage_${i}`,
-        name: `Grupo ${String.fromCharCode(65 + i)}`,
-        teamIds: []
-      });
-    }
-    
-    shuffledTeams.forEach((team, index) => {
-      groups[index % numGroups].teamIds.push(team.id);
-    });
-
-    return generateRoundRobinMatches(groups, 'group_stage');
-  } else if (status === 'playoffs') {
-    return generateDoublesPlayoffMatches(teams);
+    return generateDoublesGroupStageMatches(teams);
+  } else if (status === 'round_of_16') {
+    return generateDoublesEliminationMatches(teams, 'round_of_16');
+  } else if (status === 'quarterfinals') {
+    return generateDoublesEliminationMatches(teams, 'quarterfinals');
+  } else if (status === 'semifinals') {
+    return generateDoublesEliminationMatches(teams, 'semifinals');
+  } else if (status === 'final') {
+    return generateDoublesEliminationMatches(teams, 'final');
+  } else if (status === 'third_place') {
+    return generateDoublesEliminationMatches(teams, 'third_place');
   }
   
   return [];
 };
 
-const generateDoublesPlayoffMatches = (qualifiedTeams: any[]) => {
+const generateDoublesGroupStageMatches = (teams: any[]) => {
+  // Embaralhar times para sorteio das chaves
+  const shuffledTeams = [...teams].sort(() => Math.random() - 0.5);
+  
+  // Calcular número de grupos (3-4 times por grupo)
+  const numTeams = shuffledTeams.length;
+  let groupSize = 4;
+  let numGroups = Math.ceil(numTeams / groupSize);
+  
+  // Ajustar para evitar grupos com menos de 3 times
+  if (numTeams % numGroups < 3 && numGroups > 1) {
+    groupSize = 3;
+    numGroups = Math.ceil(numTeams / groupSize);
+  }
+  
+  // Criar grupos
+  const groups: any[] = [];
+  for (let i = 0; i < numGroups; i++) {
+    groups.push({
+      id: `g_group_stage_${i}`,
+      name: `Chave ${String.fromCharCode(65 + i)}`,
+      teamIds: []
+    });
+  }
+  
+  // Distribuir times nos grupos
+  shuffledTeams.forEach((team, index) => {
+    groups[index % numGroups].teamIds.push(team.id);
+  });
+
+  return generateRoundRobinMatches(groups, 'group_stage');
+};
+
+const generateDoublesEliminationMatches = (qualifiedTeams: any[], phase: string) => {
   const matches: any[] = [];
   let matchIdCounter = 0;
 
-  // Create playoff brackets based on number of qualified teams
-  const numTeams = qualifiedTeams.length;
-  let currentRound = 'playoffs';
-  
-  if (numTeams === 8) currentRound = 'quarterfinals';
-  else if (numTeams === 4) currentRound = 'semifinals';
-  else if (numTeams === 2) currentRound = 'final';
-
-  // Pair teams for elimination matches
-  for (let i = 0; i < qualifiedTeams.length; i += 2) {
-    if (i + 1 < qualifiedTeams.length) {
+  if (phase === 'final') {
+    // Final - 2 times
+    if (qualifiedTeams.length === 2) {
       matches.push({
-        id: `m_${currentRound}_${matchIdCounter++}`,
-        phase: 'playoffs',
-        round: currentRound,
-        teamIds: [qualifiedTeams[i].id, qualifiedTeams[i + 1].id],
+        id: `m_final_${matchIdCounter++}`,
+        phase: 'final',
+        round: 'final',
+        teamIds: [qualifiedTeams[0].id, qualifiedTeams[1].id],
         score1: null,
         score2: null,
         winnerId: null
       });
     }
+  } else if (phase === 'third_place') {
+    // Disputa de 3º lugar - 2 perdedores da semifinal
+    if (qualifiedTeams.length === 2) {
+      matches.push({
+        id: `m_third_place_${matchIdCounter++}`,
+        phase: 'third_place',
+        round: 'third_place',
+        teamIds: [qualifiedTeams[0].id, qualifiedTeams[1].id],
+        score1: null,
+        score2: null,
+        winnerId: null
+      });
+    }
+  } else {
+    // Fases eliminatórias com cruzamento olímpico
+    const pairedTeams = createOlympicCrossing(qualifiedTeams);
+    
+    pairedTeams.forEach(pair => {
+      matches.push({
+        id: `m_${phase}_${matchIdCounter++}`,
+        phase: phase,
+        round: phase,
+        teamIds: [pair[0].id, pair[1].id],
+        score1: null,
+        score2: null,
+        winnerId: null
+      });
+    });
   }
 
   return matches;
+};
+
+const createOlympicCrossing = (teams: any[]) => {
+  // Cruzamento olímpico: 1º vs 8º, 2º vs 7º, 3º vs 6º, 4º vs 5º (para oitavas)
+  // Para outras fases: 1º vs 4º, 2º vs 3º
+  const pairs: any[] = [];
+  const numTeams = teams.length;
+  
+  for (let i = 0; i < numTeams / 2; i++) {
+    const team1 = teams[i];
+    const team2 = teams[numTeams - 1 - i];
+    pairs.push([team1, team2]);
+  }
+  
+  return pairs;
 };
 
 const generateSuper16Matches = (teams: any[]) => {
@@ -223,7 +279,7 @@ export const getQualifiedTeams = (tournamentData: any, phase: string) => {
   const matches = tournamentData.matches || [];
   
   if (phase === 'group_stage') {
-    // Get top teams from each group
+    // Get top 2 teams from each group for doubles championship
     const groups = tournamentData.groups || [];
     const qualifiedTeams: any[] = [];
     
@@ -268,10 +324,46 @@ export const getQualifiedTeams = (tournamentData: any, phase: string) => {
       qualifiedTeams.push(...groupTeams.slice(0, 2));
     });
     
+    // Sort qualified teams by overall performance for seeding
+    qualifiedTeams.sort((a, b) => {
+      if (b.groupPoints !== a.groupPoints) return b.groupPoints - a.groupPoints;
+      const aDiff = a.groupPointsFor - a.groupPointsAgainst;
+      const bDiff = b.groupPointsFor - b.groupPointsAgainst;
+      if (bDiff !== aDiff) return bDiff - aDiff;
+      return b.groupPointsFor - a.groupPointsFor;
+    });
+    
     return qualifiedTeams;
+  } else if (phase === 'elimination') {
+    // Get winners from current elimination phase
+    const currentPhaseMatches = matches.filter(match => 
+      ['round_of_16', 'quarterfinals', 'semifinals'].includes(match.phase) && match.winnerId
+    );
+    
+    const winnerIds = currentPhaseMatches.map(match => match.winnerId);
+    return teams.filter(team => winnerIds.includes(team.id));
   }
   
   return [];
+};
+
+export const getNextPhase = (currentPhase: string, numQualifiedTeams: number) => {
+  if (currentPhase === 'group_stage') {
+    if (numQualifiedTeams >= 16) return 'round_of_16';
+    if (numQualifiedTeams >= 8) return 'quarterfinals';
+    if (numQualifiedTeams >= 4) return 'semifinals';
+    if (numQualifiedTeams === 2) return 'final';
+  }
+  
+  if (currentPhase === 'round_of_16') return 'quarterfinals';
+  if (currentPhase === 'quarterfinals') return 'semifinals';
+  if (currentPhase === 'semifinals') return 'final';
+  
+  return 'finished';
+};
+
+export const shouldCreateThirdPlaceMatch = (currentPhase: string) => {
+  return currentPhase === 'semifinals';
 };
 
 export const shuffleArray = (array: any[]) => {

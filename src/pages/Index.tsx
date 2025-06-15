@@ -13,6 +13,7 @@ import Leaderboard from '@/components/Leaderboard';
 import TournamentReport from '@/components/TournamentReport';
 import { useTournamentData } from '@/hooks/useTournamentData';
 import { Crown, Users, Trophy, FileText, RotateCcw, Printer } from 'lucide-react';
+import { getStatusBadge } from '@/utils/phaseUtils';
 
 const Index = () => {
   const { tournamentData, updateTournament, resetTournament, isLoading } = useTournamentData();
@@ -212,18 +213,8 @@ const Index = () => {
     return team ? team.name : 'Time';
   };
 
-  const getStatusBadge = () => {
-    const statusMap = {
-      registration: { label: 'Inscrições', color: 'bg-yellow-500' },
-      playing: { label: 'Em Andamento', color: 'bg-green-500' },
-      finished: { label: 'Finalizado', color: 'bg-blue-500' },
-      group_stage: { label: 'Fase de Grupos', color: 'bg-orange-500' },
-      phase1_groups: { label: 'Fase 1 - Grupos', color: 'bg-orange-500' },
-      phase2_playoffs: { label: 'Fase 2 - Playoffs', color: 'bg-purple-500' },
-      phase3_final: { label: 'Fase 3 - Final', color: 'bg-red-500' },
-    };
-    
-    const status = statusMap[tournamentData.status] || { label: 'Desconhecido', color: 'bg-gray-500' };
+  const getStatusBadgeComponent = () => {
+    const status = getStatusBadge(tournamentData.status);
     return (
       <Badge className={`${status.color} text-white`}>
         {status.label}
@@ -242,7 +233,7 @@ const Index = () => {
             </h1>
             <div className="flex items-center gap-4 text-sm text-gray-400">
               <span>Formato: {getFormatName(tournamentData.format)}</span>
-              {getStatusBadge()}
+              {getStatusBadgeComponent()}
             </div>
           </div>
           <Button 
