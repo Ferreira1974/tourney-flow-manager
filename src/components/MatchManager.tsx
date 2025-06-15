@@ -3,10 +3,12 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Trophy, Check, Clock, Users, Crown, Medal } from 'lucide-react';
+import { Trophy, Check, Clock, Users, Crown, Medal, History } from 'lucide-react';
 import { generateMatches, getQualifiedTeams, getNextPhase } from '@/utils/tournamentLogic';
 import { getPhaseTitle } from '@/utils/phaseUtils';
+import PhaseHistory from './PhaseHistory';
 
 interface MatchManagerProps {
   tournamentData: any;
@@ -278,6 +280,32 @@ const MatchManager = ({ tournamentData, onUpdate }: MatchManagerProps) => {
     );
   };
 
+  const getCompletedPhases = () => {
+    if (tournamentData.format !== 'doubles_groups') return [];
+    
+    const matches = tournamentData.matches || [];
+    const phases = [];
+    
+    // Check which phases have been completed
+    const phaseOrder = ['group_stage', 'round_of_16', 'quarterfinals', 'semifinals', 'final', 'third_place'];
+    
+    for (const phase of phaseOrder) {
+      const phaseMatches = matches.filter(match => match.phase === phase);
+      if (phaseMatches.length > 0) {
+        const completedMatches = phaseMatches.filter(match => match.winnerId);
+        phases.push({
+          phase,
+          title: getPhaseTitle(phase),
+          completed: completedMatches.length === phaseMatches.length,
+          totalMatches: phaseMatches.length,
+          completedMatches: completedMatches.length
+        });
+      }
+    }
+    
+    return phases;
+  };
+
   const getPhaseTitle = (phase: string) => {
     const phaseNames = {
       'group_stage': 'Fase de Grupos',
@@ -323,11 +351,161 @@ const MatchManager = ({ tournamentData, onUpdate }: MatchManagerProps) => {
     );
   }
 
-  // Show both final and third place matches when status is 'final'
-  const displayMatches = tournamentData.status === 'final' 
-    ? matches.filter(match => match.phase === 'final' || match.phase === 'third_place')
-    : currentPhaseMatches;
+  // For doubles tournament, show tabs with current phase and history
+  if (tournamentData.format === 'doubles_groups') {
+    const completedPhases = getCompletedPhases();
+    const currentPhase = tournamentData.status;
+    const hasHistory = completedPhases.some(phase => phase.completed);
 
+    // Show both final and third place matches when status is 'final'
+    const displayMatches = currentPhase === 'final' 
+      ? matches.filter(match => match.phase === 'final' || match.phase === 'third_place')
+      : matches.filter(match => match.phase === currentPhase);
+
+    return (
+      <div className="space-y-6">
+        <Tabs defaultValue="current" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 bg-gray-800 border-gray-700">
+            <TabsTrigger value="current" className="data-[state=active]:bg-blue-600">
+              Fase Atual
+            </TabsTrigger>
+            {hasHistory && (
+              <TabsTrigger value="history" className="data-[state=active]:bg-blue-600">
+                <History className="w-4 h-4 mr-2" />
+                Histórico de Fases
+              </TabsTrigger>
+            )}
+          </TabsList>
+
+          <TabsContent value="current" className="space-y-6">
+            {/* Render groups display for current phase */}
+            {renderGroupsDisplay()}
+
+            <Card className="bg-gray-800 border-gray-700 p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+                  <Trophy className="w-6 h-6" />
+                  {currentPhase === 'final' ? 'Final e Disputa de 3º Lugar' : getPhaseTitle(currentPhase)}
+                </h2>
+                <Badge className="bg-blue-600 text-white text-lg px-4 py-2">
+                  {displayMatches.filter(m => m.winnerId).length} / {displayMatches.length} concluídos
+                </Badge>
+              </div>
+
+              <div className="space-y-3">
+                {displayMatches.map((match, index) => (
+                  <Card key={match.id} className="bg-gray-700 border-gray-600 p-4">
+                    <div className="flex items-center justify-between">
+                      {/* Match Title */}
+                      <div className="text-blue-400 font-bold text-lg min-w-[150px]">
+                        {match.phase === 'final' ? 'FINAL' : match.phase === 'third_place' ? '3º LUGAR' : `Jogo ${index + 1}`}
+                      </div>
+                      
+                      {/* Teams */}
+                      <div className="flex-1 text-center">
+                        <div className="text-white font-medium">
+                          {getTeamName(match.teamIds[0])} <span className="text-gray-400 mx-2">vs</span> {getTeamName(match.teamIds[1])}
+                        </div>
+                      </div>
+
+                      {/* Status and Result */}
+                      <div className="flex items-center gap-4 min-w-[200px] justify-end">
+                        {match.winnerId ? (
+                          <>
+                            <div className="text-lg font-bold text-white">
+                              {match.score1} x {match.score2}
+                            </div>
+                            <Badge className="bg-green-600 text-white">
+                              <Check className="w-3 h-3 mr-1" />
+                              Finalizado
+                            </Badge>
+                          </>
+                        ) : (
+                          <>
+                            <div className="flex items-center gap-2">
+                              <Input
+                                type="number"
+                                min="0"
+                                placeholder="0"
+                                value={scores[match.id]?.score1 || ''}
+                                onChange={(e) => handleScoreChange(match.id, 'score1', e.target.value)}
+                                className="w-16 text-center bg-gray-600 border-gray-500 text-white"
+                              />
+                              <span className="text-gray-400">x</span>
+                              <Input
+                                type="number"
+                                min="0"
+                                placeholder="0"
+                                value={scores[match.id]?.score2 || ''}
+                                onChange={(e) => handleScoreChange(match.id, 'score2', e.target.value)}
+                                className="w-16 text-center bg-gray-600 border-gray-500 text-white"
+                              />
+                            </div>
+                            <Button
+                              onClick={() => handleSaveScore(match.id)}
+                              size="sm"
+                              className="bg-blue-600 hover:bg-blue-700"
+                            >
+                              Salvar
+                            </Button>
+                            <Badge className="bg-gray-500 text-white">
+                              Pendente
+                            </Badge>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="history" className="space-y-6">
+            <Card className="bg-gray-800 border-gray-700 p-6">
+              <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+                <History className="w-6 h-6 text-blue-400" />
+                Histórico de Todas as Fases
+              </h2>
+              
+              <Tabs orientation="vertical" className="flex gap-6">
+                <TabsList className="flex flex-col h-fit bg-gray-700 border-gray-600 min-w-[200px]">
+                  {completedPhases.map((phaseInfo) => (
+                    <TabsTrigger 
+                      key={phaseInfo.phase} 
+                      value={phaseInfo.phase}
+                      className="w-full justify-start data-[state=active]:bg-blue-600 text-left"
+                    >
+                      <div className="flex flex-col items-start">
+                        <span className="font-medium">{phaseInfo.title}</span>
+                        <span className="text-xs text-gray-400">
+                          {phaseInfo.completedMatches}/{phaseInfo.totalMatches} jogos
+                        </span>
+                      </div>
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+
+                <div className="flex-1">
+                  {completedPhases.map((phaseInfo) => (
+                    <TabsContent key={phaseInfo.phase} value={phaseInfo.phase}>
+                      <PhaseHistory 
+                        tournamentData={tournamentData}
+                        phase={phaseInfo.phase}
+                        phaseTitle={phaseInfo.title}
+                      />
+                    </TabsContent>
+                  ))}
+                </div>
+              </Tabs>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+    );
+  }
+
+  // For other tournament formats, keep existing behavior
   return (
     <div className="space-y-6">
       {/* Render groups display for doubles tournament in group stage */}
@@ -337,15 +515,15 @@ const MatchManager = ({ tournamentData, onUpdate }: MatchManagerProps) => {
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-white flex items-center gap-2">
             <Trophy className="w-6 h-6" />
-            {tournamentData.status === 'final' ? 'Final e Disputa de 3º Lugar' : getPhaseTitle(tournamentData.status)}
+            {getPhaseTitle(tournamentData.status)}
           </h2>
           <Badge className="bg-blue-600 text-white text-lg px-4 py-2">
-            {displayMatches.filter(m => m.winnerId).length} / {displayMatches.length} concluídos
+            {currentPhaseMatches.filter(m => m.winnerId).length} / {currentPhaseMatches.length} concluídos
           </Badge>
         </div>
 
         <div className="space-y-3">
-          {displayMatches.map((match, index) => (
+          {currentPhaseMatches.map((match, index) => (
             <Card key={match.id} className="bg-gray-700 border-gray-600 p-4">
               <div className="flex items-center justify-between">
                 {/* Match Title */}
