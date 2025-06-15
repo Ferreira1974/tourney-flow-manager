@@ -8,6 +8,7 @@ import ReportHeader from './ReportHeader';
 import DoublesGroupsFormation from './DoublesGroupsFormation';
 import DoublesGamesByPhase from './DoublesGamesByPhase';
 import DoublesMedalSummary from './DoublesMedalSummary';
+import TournamentPrintReportDialog from './TournamentPrintReportDialog';
 
 interface TournamentReportProps {
   tournamentData: any;
@@ -121,6 +122,9 @@ const TournamentReport = ({ tournamentData }: TournamentReportProps) => {
       </div>
     );
   }
+
+  // ADD: Dialog State
+  const [openPrintDialog, setOpenPrintDialog] = React.useState(false);
 
   // Utilitário: Listar jogos por fase, incluindo finais
   const getGamesByPhase = () => {
@@ -288,6 +292,15 @@ const TournamentReport = ({ tournamentData }: TournamentReportProps) => {
               <Download className="w-4 h-4" />
               Download PDF
             </Button>
+            {/* NOVO botão - abrir dialog para relatório final para impressão */}
+            <Button
+              onClick={() => setOpenPrintDialog(true)}
+              className="bg-emerald-700 hover:bg-emerald-800 flex items-center gap-2"
+            >
+              <Printer className="w-4 h-4" />
+              Imprimir relatório final
+            </Button>
+            {/* FIM NOVO */}
             {/* Botão verde - Imprimir lista de jogos */}
             <Button
               onClick={handlePrintGameList}
