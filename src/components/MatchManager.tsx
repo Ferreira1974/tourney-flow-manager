@@ -611,16 +611,22 @@ const MatchManager = ({ tournamentData, onUpdate }: MatchManagerProps) => {
     );
   }
 
-  // For doubles tournament, show tabs with current phase and history
+  // For doubles tournament, show only "Fase Atual" tab, e sempre mostrar as partidas da final + 3º lugar quando a fase estiver nessas
   if (tournamentData.format === 'doubles_groups') {
     const completedPhases = getCompletedPhases();
     const currentPhase = tournamentData.status;
-    const hasHistory = completedPhases.some(phase => phase.completed);
 
-    // Show both final and third place matches when status is 'final'
-    const displayMatches = currentPhase === 'final' 
-      ? matches.filter(match => match.phase === 'final' || match.phase === 'third_place')
-      : matches.filter(match => match.phase === currentPhase);
+    // Corrigido: Mostrar final + 3º lugar juntos quando em "final" ou em "third_place"
+    let displayMatches: any[] = [];
+    if (currentPhase === 'final' || currentPhase === 'third_place') {
+      displayMatches = (tournamentData.matches || []).filter(
+        m => m.phase === 'final' || m.phase === 'third_place'
+      );
+    } else {
+      displayMatches = (tournamentData.matches || []).filter(
+        m => m.phase === currentPhase
+      );
+    }
 
     return (
       <div className="space-y-6">
@@ -632,29 +638,16 @@ const MatchManager = ({ tournamentData, onUpdate }: MatchManagerProps) => {
           >
             <span>Imprimir lista de jogos / backup</span>
           </Button>
-          <Button 
-            onClick={() => setActivePhaseHistory(true)}
-            className="bg-teal-600 hover:bg-teal-700 flex items-center gap-2"
-            type="button"
-          >
-            <span>Histórico de Fases</span>
-          </Button>
+          {/* Removido o botão Histórico de Fases */}
         </div>
         {/* modais de backup e histórico */}
         {renderBackupModal()}
-        {renderPhaseHistoryModal()}
         {/* resto da aba jogos padrão */}
         <Tabs defaultValue="current" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 bg-gray-800 border-gray-700">
+          <TabsList className="grid w-full grid-cols-1 bg-gray-800 border-gray-700">
             <TabsTrigger value="current" className="data-[state=active]:bg-blue-600">
               Fase Atual
             </TabsTrigger>
-            {hasHistory && (
-              <TabsTrigger value="history" className="data-[state=active]:bg-blue-600">
-                <History className="w-4 h-4 mr-2" />
-                Histórico de Fases
-              </TabsTrigger>
-            )}
           </TabsList>
 
           <TabsContent value="current" className="space-y-6">
@@ -665,7 +658,11 @@ const MatchManager = ({ tournamentData, onUpdate }: MatchManagerProps) => {
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-white flex items-center gap-2">
                   <Trophy className="w-6 h-6" />
-                  {currentPhase === 'final' ? 'Final e Disputa de 3º Lugar' : getPhaseTitle(currentPhase)}
+                  {/* Título ajustado para as finais */}
+                  {(currentPhase === 'final' || currentPhase === 'third_place')
+                    ? 'Final e Disputa de 3º Lugar'
+                    : getPhaseTitle(currentPhase)
+                  }
                 </h2>
                 <Badge className="bg-blue-600 text-white text-lg px-4 py-2">
                   {displayMatches.filter(m => m.winnerId).length} / {displayMatches.length} concluídos
@@ -738,46 +735,6 @@ const MatchManager = ({ tournamentData, onUpdate }: MatchManagerProps) => {
                   </Card>
                 ))}
               </div>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="history" className="space-y-6">
-            <Card className="bg-gray-800 border-gray-700 p-6">
-              <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
-                <History className="w-6 h-6 text-blue-400" />
-                Histórico de Todas as Fases
-              </h2>
-              
-              <Tabs orientation="vertical" className="flex gap-6">
-                <TabsList className="flex flex-col h-fit bg-gray-700 border-gray-600 min-w-[200px]">
-                  {completedPhases.map((phaseInfo) => (
-                    <TabsTrigger 
-                      key={phaseInfo.phase} 
-                      value={phaseInfo.phase}
-                      className="w-full justify-start data-[state=active]:bg-blue-600 text-left"
-                    >
-                      <div className="flex flex-col items-start">
-                        <span className="font-medium">{phaseInfo.title}</span>
-                        <span className="text-xs text-gray-400">
-                          {phaseInfo.completedMatches}/{phaseInfo.totalMatches} jogos
-                        </span>
-                      </div>
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
-
-                <div className="flex-1">
-                  {completedPhases.map((phaseInfo) => (
-                    <TabsContent key={phaseInfo.phase} value={phaseInfo.phase}>
-                      <PhaseHistory 
-                        tournamentData={tournamentData}
-                        phase={phaseInfo.phase}
-                        phaseTitle={phaseInfo.title}
-                      />
-                    </TabsContent>
-                  ))}
-                </div>
-              </Tabs>
             </Card>
           </TabsContent>
         </Tabs>
