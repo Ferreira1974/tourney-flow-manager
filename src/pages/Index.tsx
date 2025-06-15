@@ -101,6 +101,10 @@ const Index = () => {
     // Lógica placeholder (caso precise customizar)
   };
 
+  // Antes do return, tornamos available os dados para GameOptionsCard backup (global var simplificada)
+  // Isso é uma forma prática para compartilhar dados entre componentes sem state lift (pode refatorar depois)
+  (window as any).tournamentDataForBackup = tournamentData || {};
+
   return (
     <div className="min-h-screen bg-gray-900 text-white">
       <div className="container mx-auto p-4 max-w-7xl">
