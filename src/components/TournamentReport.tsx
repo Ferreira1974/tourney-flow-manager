@@ -298,16 +298,16 @@ const TournamentReport = ({ tournamentData }: TournamentReportProps) => {
           <h3 className="text-[1.35rem] font-black text-indigo-700 text-center uppercase mb-2">Destaques Finais</h3>
           <div className="flex flex-col sm:flex-row justify-between gap-3">
             <div className="flex-1 text-center">
-              <span className="block text-blue-700 font-bold text-sm mb-1">Campeão</span>
-              <span className="block font-black text-lg text-yellow-700">{champion || '-'}</span>
+              <span className="block text-blue-800 font-semibold text-base mb-1">Campeão</span>
+              <span className="block font-black text-base text-blue-900">{champion || '-'}</span>
             </div>
             <div className="flex-1 text-center">
-              <span className="block text-blue-700 font-bold text-sm mb-1">Finalista</span>
-              <span className="block font-black text-lg text-gray-700">{vice || '-'}</span>
+              <span className="block text-blue-800 font-semibold text-base mb-1">Finalista</span>
+              <span className="block font-black text-base text-blue-900">{vice || '-'}</span>
             </div>
             <div className="flex-1 text-center">
-              <span className="block text-blue-700 font-bold text-sm mb-1">3º Lugar</span>
-              <span className="block font-black text-lg text-amber-700">{third || '-'}</span>
+              <span className="block text-blue-800 font-semibold text-base mb-1">3º Lugar</span>
+              <span className="block font-black text-base text-blue-900">{third || '-'}</span>
             </div>
           </div>
         </div>
