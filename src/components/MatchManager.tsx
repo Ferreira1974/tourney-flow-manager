@@ -616,12 +616,23 @@ const MatchManager = ({ tournamentData, onUpdate }: MatchManagerProps) => {
     const completedPhases = getCompletedPhases();
     const currentPhase = tournamentData.status;
 
-    // Corrigido: Mostrar final + 3º lugar juntos quando em "final" ou em "third_place"
+    // Novo: sempre exibir jogos da final e terceiro lugar quando em 'final', 'third_place' ou 'finished'
     let displayMatches: any[] = [];
-    if (currentPhase === 'final' || currentPhase === 'third_place') {
+
+    if (
+      currentPhase === 'final' ||
+      currentPhase === 'third_place' ||
+      currentPhase === 'finished'
+    ) {
+      // Mostra todos jogos das duas fases juntos, garantindo ordenação (final primeiro)
       displayMatches = (tournamentData.matches || []).filter(
         m => m.phase === 'final' || m.phase === 'third_place'
       );
+      // Ordena: final antes, terceiro lugar depois
+      displayMatches.sort((a, b) => {
+        const phaseOrder = { 'final': 0, 'third_place': 1 };
+        return (phaseOrder[a.phase] ?? 99) - (phaseOrder[b.phase] ?? 99);
+      });
     } else {
       displayMatches = (tournamentData.matches || []).filter(
         m => m.phase === currentPhase
@@ -658,8 +669,7 @@ const MatchManager = ({ tournamentData, onUpdate }: MatchManagerProps) => {
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-white flex items-center gap-2">
                   <Trophy className="w-6 h-6" />
-                  {/* Título ajustado para as finais */}
-                  {(currentPhase === 'final' || currentPhase === 'third_place')
+                  {(currentPhase === 'final' || currentPhase === 'third_place' || currentPhase === 'finished')
                     ? 'Final e Disputa de 3º Lugar'
                     : getPhaseTitle(currentPhase)
                   }

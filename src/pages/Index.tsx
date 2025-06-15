@@ -98,7 +98,7 @@ const Index = () => {
   };
 
   const handlePrintMatchesBackup = () => {
-    // Lógica placeholder (poderia ser expandida conforme necessário)
+    // Lógica placeholder (caso precise customizar)
   };
 
   return (
