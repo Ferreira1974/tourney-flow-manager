@@ -1,3 +1,4 @@
+
 export const generateMatches = (tournamentData: any) => {
   const { format, teams, players, status } = tournamentData;
   
@@ -218,11 +219,13 @@ const generateSuper16Matches = (teams: any[]) => {
     {
       id: 'g_group_stage_0',
       name: 'Grupo A',
+      // Use the team IDs directly (which contain the player IDs)
       teamIds: teams.slice(0, 4).map(t => t.id)
     },
     {
       id: 'g_group_stage_1', 
       name: 'Grupo B',
+      // Use the team IDs directly (which contain the player IDs)
       teamIds: teams.slice(4, 8).map(t => t.id)
     }
   ];

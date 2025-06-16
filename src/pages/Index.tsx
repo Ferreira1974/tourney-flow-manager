@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -73,12 +74,24 @@ const Index = () => {
 
   const getTeamDisplayName = (teamId: any) => {
     // Enhanced for Super 16 format
-    if (tournamentData.format === 'super16' && Array.isArray(teamId)) {
-      const playerNames = teamId.map(playerId => {
-        const player = (tournamentData.players || []).find(p => p.id === playerId);
-        return player ? player.name : 'Jogador';
-      });
-      return playerNames.join(' / ');
+    if (tournamentData.format === 'super16') {
+      if (Array.isArray(teamId)) {
+        const playerNames = teamId.map(playerId => {
+          const player = (tournamentData.players || []).find(p => p.id === playerId);
+          return player ? player.name : 'Jogador';
+        });
+        return playerNames.join(' / ');
+      }
+      // If it's not an array, try to find the team by ID
+      const team = (tournamentData.teams || []).find(t => t.id === teamId);
+      if (team && Array.isArray(team.playerIds)) {
+        const playerNames = team.playerIds.map(playerId => {
+          const player = (tournamentData.players || []).find(p => p.id === playerId);
+          return player ? player.name : 'Jogador';
+        });
+        return playerNames.join(' / ');
+      }
+      return 'Dupla';
     }
     
     if (Array.isArray(teamId)) {

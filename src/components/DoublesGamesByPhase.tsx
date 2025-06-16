@@ -4,12 +4,24 @@ import { Trophy } from "lucide-react";
 
 function getTeamName(teamId: any, tournamentData: any) {
   // Handle Super 16 format where teamIds are arrays of player IDs
-  if (tournamentData.format === 'super16' && Array.isArray(teamId)) {
-    const playerNames = teamId.map((playerId: string) => {
-      const player = (tournamentData.players || []).find((p: any) => p.id === playerId);
-      return player ? player.name : "Jogador";
-    });
-    return playerNames.join(" / ");
+  if (tournamentData.format === 'super16') {
+    if (Array.isArray(teamId)) {
+      const playerNames = teamId.map((playerId: string) => {
+        const player = (tournamentData.players || []).find((p: any) => p.id === playerId);
+        return player ? player.name : "Jogador";
+      });
+      return playerNames.join(" / ");
+    }
+    // If it's not an array, try to find the team by ID
+    const team = (tournamentData.teams || []).find((t: any) => t.id === teamId);
+    if (team && Array.isArray(team.playerIds)) {
+      const playerNames = team.playerIds.map((playerId: string) => {
+        const player = (tournamentData.players || []).find((p: any) => p.id === playerId);
+        return player ? player.name : "Jogador";
+      });
+      return playerNames.join(" / ");
+    }
+    return "Dupla";
   }
   
   // Handle doubles_groups format where teamIds are arrays of player IDs

@@ -34,10 +34,14 @@ const GamePrintBackupButton: React.FC<GamePrintBackupButtonProps> = ({
         });
         return playerNames.join(' / ');
       }
-      // If it's not an array, try to find the team
+      // If it's not an array, try to find the team by ID
       const team = (tournamentData.teams || []).find(t => t.id === teamId);
-      if (team) {
-        return team.name;
+      if (team && Array.isArray(team.playerIds)) {
+        const playerNames = team.playerIds.map(playerId => {
+          const player = (tournamentData.players || []).find(p => p.id === playerId);
+          return player ? player.name : 'Jogador';
+        });
+        return playerNames.join(' / ');
       }
       // Last fallback
       return 'Dupla';
