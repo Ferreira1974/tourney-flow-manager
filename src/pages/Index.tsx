@@ -72,6 +72,15 @@ const Index = () => {
   };
 
   const getTeamDisplayName = (teamId: any) => {
+    // Enhanced for Super 16 format
+    if (tournamentData.format === 'super16' && Array.isArray(teamId)) {
+      const playerNames = teamId.map(playerId => {
+        const player = (tournamentData.players || []).find(p => p.id === playerId);
+        return player ? player.name : 'Jogador';
+      });
+      return playerNames.join(' / ');
+    }
+    
     if (Array.isArray(teamId)) {
       const playerNames = teamId.map(playerId => {
         const player = (tournamentData.players || []).find(p => p.id === playerId);

@@ -3,6 +3,16 @@ import React from "react";
 import { Trophy } from "lucide-react";
 
 function getTeamName(teamId: any, tournamentData: any) {
+  // Handle Super 16 format where teamIds are arrays of player IDs
+  if (tournamentData.format === 'super16' && Array.isArray(teamId)) {
+    const playerNames = teamId.map((playerId: string) => {
+      const player = (tournamentData.players || []).find((p: any) => p.id === playerId);
+      return player ? player.name : "Jogador";
+    });
+    return playerNames.join(" / ");
+  }
+  
+  // Handle doubles_groups format where teamIds are arrays of player IDs
   if (Array.isArray(teamId)) {
     const playerNames = teamId.map((playerId: string) => {
       const player = (tournamentData.players || []).find((p: any) => p.id === playerId);
@@ -10,6 +20,8 @@ function getTeamName(teamId: any, tournamentData: any) {
     });
     return playerNames.join(" / ");
   }
+  
+  // Handle team-based formats
   const team = (tournamentData.teams || []).find((t: any) => t.id === teamId);
   return team ? team.name : "Time";
 }
