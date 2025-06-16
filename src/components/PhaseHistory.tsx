@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -14,6 +15,25 @@ const PhaseHistory = ({ tournamentData, phase, phaseTitle }: PhaseHistoryProps) 
   const groups = tournamentData.groups || [];
 
   const getTeamName = (teamId: any) => {
+    if (tournamentData?.format === 'super16') {
+      // For Super 16, teamId should be an array of player IDs
+      if (Array.isArray(teamId)) {
+        const playerNames = teamId.map(playerId => {
+          const player = (tournamentData.players || []).find(p => p.id === playerId);
+          return player ? player.name : 'Jogador';
+        });
+        return playerNames.join(' / ');
+      }
+      // If it's not an array, try to find the team
+      const team = (tournamentData.teams || []).find(t => t.id === teamId);
+      if (team) {
+        return team.name;
+      }
+      // Last fallback
+      return 'Dupla';
+    }
+    
+    // For other formats
     if (Array.isArray(teamId)) {
       const playerNames = teamId.map(playerId => {
         const player = (tournamentData.players || []).find(p => p.id === playerId);
@@ -47,14 +67,14 @@ const PhaseHistory = ({ tournamentData, phase, phaseTitle }: PhaseHistoryProps) 
               </h4>
               <div className="space-y-2">
                 {group.teamIds.map((teamId, teamIndex) => {
-                  const team = (tournamentData.teams || []).find(t => t.id === teamId);
+                  const teamName = getTeamName(teamId);
                   return (
                     <div key={teamId} className="flex items-center gap-2 p-2 bg-gray-600 rounded">
                       <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
                         {teamIndex + 1}
                       </div>
                       <span className="text-white font-medium">
-                        {team ? team.name : 'Dupla'}
+                        {teamName}
                       </span>
                     </div>
                   );

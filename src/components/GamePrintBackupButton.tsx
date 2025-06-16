@@ -10,6 +10,7 @@ interface GamePrintBackupButtonProps {
   teams: any[];
   tournamentName: string;
   getTeamDisplayName: (teamId: any) => string;
+  tournamentData?: any;
 }
 
 const GamePrintBackupButton: React.FC<GamePrintBackupButtonProps> = ({
@@ -18,8 +19,33 @@ const GamePrintBackupButton: React.FC<GamePrintBackupButtonProps> = ({
   teams,
   tournamentName,
   getTeamDisplayName,
+  tournamentData,
 }) => {
   if (!matches || matches.length === 0) return null;
+
+  // Enhanced team name function for Super 16 format
+  const getEnhancedTeamName = (teamId: any) => {
+    if (tournamentData?.format === 'super16') {
+      // For Super 16, teamId should be an array of player IDs
+      if (Array.isArray(teamId)) {
+        const playerNames = teamId.map(playerId => {
+          const player = (tournamentData.players || []).find(p => p.id === playerId);
+          return player ? player.name : 'Jogador';
+        });
+        return playerNames.join(' / ');
+      }
+      // If it's not an array, try to find the team
+      const team = (tournamentData.teams || []).find(t => t.id === teamId);
+      if (team) {
+        return team.name;
+      }
+      // Last fallback
+      return 'Dupla';
+    }
+    
+    // For other formats, use the provided getTeamDisplayName function
+    return getTeamDisplayName(teamId);
+  };
 
   const handlePrintMatchesBackup = () => {
     const matchesWindow = window.open('', '_blank');
@@ -40,9 +66,9 @@ const GamePrintBackupButton: React.FC<GamePrintBackupButtonProps> = ({
               <div style="font-weight:bold;color:#2563eb;margin-bottom:6px;">${group.name}</div>
               <ol style="padding-left:18px;">
                 ${group.teamIds.map((tid: string, idx: number) => {
-                  const team = teams.find((t: any) => t.id === tid);
+                  const teamName = getEnhancedTeamName(tid);
                   return `<li style="margin-bottom:2px;color:#232f38;font-size:14px;">
-                    <span style="font-weight:bold;">${idx + 1}.</span> ${team ? team.name : 'Dupla'}
+                    <span style="font-weight:bold;">${idx + 1}.</span> ${teamName}
                   </li>`
                 }).join('')}
               </ol>
@@ -63,8 +89,8 @@ const GamePrintBackupButton: React.FC<GamePrintBackupButtonProps> = ({
         <div class="matches-list" style="max-width:700px;margin:0 auto;">
       `;
       matches.forEach((match, idx) => {
-        const team1Name = getTeamDisplayName(match.teamIds[0]);
-        const team2Name = getTeamDisplayName(match.teamIds[1]);
+        const team1Name = getEnhancedTeamName(match.teamIds[0]);
+        const team2Name = getEnhancedTeamName(match.teamIds[1]);
         matchesHTML += `
           <div class="match-row" style="background:#f1f5fa;border:1.5px solid #93c5fd;border-radius:8px;min-height:44px;padding:10px 20px;display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
             <div class="match-number" style="font-weight:bold;color:#2563eb;font-size:15px;">Jogo ${idx + 1}</div>

@@ -30,8 +30,27 @@ const TournamentReport = ({ tournamentData }: TournamentReportProps) => {
     );
   }
 
-  // Helpers
+  // Enhanced team name function for Super 16 format
   const getTeamName = (teamId: any) => {
+    if (tournamentData?.format === 'super16') {
+      // For Super 16, teamId should be an array of player IDs
+      if (Array.isArray(teamId)) {
+        const playerNames = teamId.map(playerId => {
+          const player = (tournamentData.players || []).find(p => p.id === playerId);
+          return player ? player.name : 'Jogador';
+        });
+        return playerNames.join(' / ');
+      }
+      // If it's not an array, try to find the team
+      const team = (tournamentData.teams || []).find(t => t.id === teamId);
+      if (team) {
+        return team.name;
+      }
+      // Last fallback
+      return 'Dupla';
+    }
+    
+    // For other formats
     if (Array.isArray(teamId)) {
       const playerNames = teamId.map((playerId: any) => {
         const player = (tournamentData.players || []).find((p: any) => p.id === playerId);
@@ -239,6 +258,7 @@ const TournamentReport = ({ tournamentData }: TournamentReportProps) => {
         phasesOrder={phasesOrder}
         gamesByPhase={gamesByPhase}
         getTeamName={getTeamName}
+        tournamentData={tournamentData}
       />
 
       {/* Medalhistas finais */}

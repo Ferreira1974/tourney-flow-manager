@@ -6,7 +6,7 @@ interface TournamentGamesByPhaseProps {
   phasesOrder: { key: string; label: string }[];
   gamesByPhase: Record<string, any[]>;
   getTeamName: (teamId: any) => string;
-  tournamentData?: any; // Add tournamentData to access format and teams/players
+  tournamentData?: any;
 }
 
 const TournamentGamesByPhase = ({
@@ -26,9 +26,13 @@ const TournamentGamesByPhase = ({
         });
         return playerNames.join(' / ');
       }
-      // Fallback to team lookup
+      // If it's not an array, try to find the team
       const team = (tournamentData.teams || []).find(t => t.id === teamId);
-      return team ? team.name : 'Dupla';
+      if (team) {
+        return team.name;
+      }
+      // Last fallback
+      return 'Dupla';
     }
     
     // For other formats, use the provided getTeamName function
