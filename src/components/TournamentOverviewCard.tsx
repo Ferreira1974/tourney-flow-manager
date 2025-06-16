@@ -21,10 +21,56 @@ const TournamentOverviewCard: React.FC<TournamentOverviewCardProps> = ({
   tournamentData,
 }) => {
   const getParticipantCount = () => {
-    if (["doubles_groups", "super16"].includes(tournamentData.format)) {
+    if (["doubles_groups"].includes(tournamentData.format)) {
       return (tournamentData.teams || []).length;
     }
+    
+    // Para Super 16: mostrar duplas após o sorteio
+    if (tournamentData.format === "super16") {
+      if (tournamentData.status === "registration") {
+        return (tournamentData.players || []).length;
+      } else {
+        // Após o sorteio, mostrar número de duplas (jogadores / 2)
+        return Math.floor((tournamentData.players || []).length / 2);
+      }
+    }
+    
     return (tournamentData.players || []).length;
+  };
+
+  const getParticipantLabel = () => {
+    if (["doubles_groups"].includes(tournamentData.format)) {
+      return "Duplas";
+    }
+    
+    // Para Super 16: mostrar "Duplas" após o sorteio
+    if (tournamentData.format === "super16") {
+      if (tournamentData.status === "registration") {
+        return "Jogadores";
+      } else {
+        return "Duplas";
+      }
+    }
+    
+    return "Participantes";
+  };
+
+  const getParticipantTotal = () => {
+    if (["doubles_groups"].includes(tournamentData.format)) {
+      return (tournamentData.teams || []).length;
+    }
+    
+    // Para Super 16: mostrar total de duplas após o sorteio
+    if (tournamentData.format === "super16") {
+      if (tournamentData.status === "registration") {
+        return tournamentData.size || 16;
+      } else {
+        // Total de duplas possíveis
+        return Math.floor((tournamentData.size || 16) / 2);
+      }
+    }
+    
+    return tournamentData.size || (tournamentData.players || []).length;
   };
 
   const getMatchStats = () => {
@@ -57,8 +103,10 @@ const TournamentOverviewCard: React.FC<TournamentOverviewCardProps> = ({
         <div className="bg-gray-700 p-4 rounded-lg">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-400">Participantes</p>
-              <p className="text-lg font-bold text-white">{getParticipantCount()}</p>
+              <p className="text-sm font-medium text-gray-400">{getParticipantLabel()}</p>
+              <p className="text-lg font-bold text-white">
+                {getParticipantCount()} / {getParticipantTotal()}
+              </p>
             </div>
             <Users className="w-6 h-6 text-green-400" />
           </div>
