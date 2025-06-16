@@ -36,6 +36,9 @@ const ParticipantManager = ({ tournamentData, onUpdate }: ParticipantManagerProp
   const currentParticipants = getCurrentParticipants();
   const isFull = currentParticipants.length >= requiredCount;
 
+  // Para Super 16: verificar se já foi feito o sorteio (se existem teams)
+  const isSuper16AfterDraw = isSuper16 && (tournamentData.teams || []).length > 0;
+
   function getRequiredParticipantCount() {
     const fixedSizes = { super8: 8, super16: 16, king_of_the_court: 16 };
     return fixedSizes[tournamentData.format] || tournamentData.size || 0;
@@ -357,8 +360,8 @@ const ParticipantManager = ({ tournamentData, onUpdate }: ParticipantManagerProp
 
   return (
     <div className="space-y-6">
-      {/* Registration Form */}
-      {tournamentData.status === 'registration' && (
+      {/* Registration Form - Hide after draw for Super 16 */}
+      {tournamentData.status === 'registration' && !isSuper16AfterDraw && (
         <Card className="bg-gray-800 border-gray-700 p-6">
           <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
             <Plus className="w-5 h-5" />
@@ -437,8 +440,8 @@ const ParticipantManager = ({ tournamentData, onUpdate }: ParticipantManagerProp
             </div>
           )}
 
-          {/* Action Buttons */}
-          {isFull && (
+          {/* Action Buttons - Show draw button only before draw */}
+          {isFull && !isSuper16AfterDraw && (
             <div className="mt-6 pt-6 border-t border-gray-700 space-y-3">
               <h4 className="text-lg font-semibold text-gray-300 text-center mb-4">
                 Ações do Torneio
@@ -454,16 +457,39 @@ const ParticipantManager = ({ tournamentData, onUpdate }: ParticipantManagerProp
                 </Button>
               )}
               
-              <Button
-                onClick={handleGenerateMatches}
-                disabled={!canGenerateMatches}
-                className="w-full bg-orange-600 hover:bg-orange-700 font-bold disabled:opacity-50"
-              >
-                <Play className="w-4 h-4 mr-2" />
-                Gerar Jogos
-              </Button>
+              {/* Show generate matches button only for non-Super16 formats */}
+              {!isSuper16 && (
+                <Button
+                  onClick={handleGenerateMatches}
+                  disabled={!canGenerateMatches}
+                  className="w-full bg-orange-600 hover:bg-orange-700 font-bold disabled:opacity-50"
+                >
+                  <Play className="w-4 h-4 mr-2" />
+                  Gerar Jogos
+                </Button>
+              )}
             </div>
           )}
+        </Card>
+      )}
+
+      {/* Generate Matches Button for Super 16 after draw */}
+      {isSuper16AfterDraw && tournamentData.status === 'registration' && (
+        <Card className="bg-gray-800 border-gray-700 p-6">
+          <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+            <Play className="w-5 h-5" />
+            Iniciar Torneio
+          </h3>
+          <p className="text-gray-300 mb-6">
+            As duplas foram sorteadas com sucesso! Agora você pode gerar os jogos para iniciar o torneio.
+          </p>
+          <Button
+            onClick={handleGenerateMatches}
+            className="w-full bg-orange-600 hover:bg-orange-700 font-bold"
+          >
+            <Play className="w-4 h-4 mr-2" />
+            Gerar Jogos
+          </Button>
         </Card>
       )}
 
@@ -471,7 +497,7 @@ const ParticipantManager = ({ tournamentData, onUpdate }: ParticipantManagerProp
       <Card className="bg-gray-800 border-gray-700 p-6">
         <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
           <Users className="w-5 h-5" />
-          Participantes Cadastrados
+          {isSuper16AfterDraw ? 'Duplas Formadas' : 'Participantes Cadastrados'}
         </h3>
 
         {currentParticipants.length === 0 ? (
@@ -506,27 +532,30 @@ const ParticipantManager = ({ tournamentData, onUpdate }: ParticipantManagerProp
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleEditParticipant(participant)}
-                    className="text-blue-400 hover:text-blue-300 hover:bg-blue-900/20"
-                  >
-                    <Edit2 className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleDeleteParticipant(
-                      participant.id, 
-                      participant.players ? 'team' : 'player'
-                    )}
-                    className="text-red-400 hover:text-red-300 hover:bg-red-900/20"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
+                {/* Hide edit/delete buttons for Super 16 after draw */}
+                {!isSuper16AfterDraw && (
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleEditParticipant(participant)}
+                      className="text-blue-400 hover:text-blue-300 hover:bg-blue-900/20"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDeleteParticipant(
+                        participant.id, 
+                        participant.players ? 'team' : 'player'
+                      )}
+                      className="text-red-400 hover:text-red-300 hover:bg-red-900/20"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -537,82 +566,84 @@ const ParticipantManager = ({ tournamentData, onUpdate }: ParticipantManagerProp
         </div>
       </Card>
 
-      {/* Edit Modal */}
-      <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
-        <DialogContent className="bg-gray-800 border-gray-700 text-white">
-          <DialogHeader>
-            <DialogTitle className="text-white">
-              Editar {editingParticipant?.players ? 'Dupla' : 'Jogador'}
-            </DialogTitle>
-          </DialogHeader>
-          
-          <div className="space-y-4">
-            {editingParticipant?.players ? (
-              <>
-                <div>
-                  <label className="text-sm text-gray-400 mb-1 block">Jogador 1</label>
-                  <Input
-                    value={editPlayer1}
-                    onChange={(e) => setEditPlayer1(e.target.value)}
-                    placeholder="Nome do Jogador 1"
-                    className="bg-gray-700 border-gray-600 text-white"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm text-gray-400 mb-1 block">Jogador 2</label>
-                  <Input
-                    value={editPlayer2}
-                    onChange={(e) => setEditPlayer2(e.target.value)}
-                    placeholder="Nome do Jogador 2"
-                    className="bg-gray-700 border-gray-600 text-white"
-                  />
-                </div>
-              </>
-            ) : (
-              <>
-                <div>
-                  <label className="text-sm text-gray-400 mb-1 block">Nome do Jogador</label>
-                  <Input
-                    value={editName}
-                    onChange={(e) => setEditName(e.target.value)}
-                    placeholder="Nome do Jogador"
-                    className="bg-gray-700 border-gray-600 text-white"
-                  />
-                </div>
-                {(isSuper16 || isKingOfCourt) && (
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="edit-head-of-key"
-                      checked={editIsHeadOfKey}
-                      onCheckedChange={(checked) => setEditIsHeadOfKey(checked === true)}
-                      className="border-yellow-400 data-[state=checked]:bg-yellow-500"
+      {/* Edit Modal - Hide for Super 16 after draw */}
+      {!isSuper16AfterDraw && (
+        <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
+          <DialogContent className="bg-gray-800 border-gray-700 text-white">
+            <DialogHeader>
+              <DialogTitle className="text-white">
+                Editar {editingParticipant?.players ? 'Dupla' : 'Jogador'}
+              </DialogTitle>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              {editingParticipant?.players ? (
+                <>
+                  <div>
+                    <label className="text-sm text-gray-400 mb-1 block">Jogador 1</label>
+                    <Input
+                      value={editPlayer1}
+                      onChange={(e) => setEditPlayer1(e.target.value)}
+                      placeholder="Nome do Jogador 1"
+                      className="bg-gray-700 border-gray-600 text-white"
                     />
-                    <label htmlFor="edit-head-of-key" className="text-sm text-yellow-400 font-medium">
-                      Cabeça de Chave
-                    </label>
                   </div>
-                )}
-              </>
-            )}
-          </div>
+                  <div>
+                    <label className="text-sm text-gray-400 mb-1 block">Jogador 2</label>
+                    <Input
+                      value={editPlayer2}
+                      onChange={(e) => setEditPlayer2(e.target.value)}
+                      placeholder="Nome do Jogador 2"
+                      className="bg-gray-700 border-gray-600 text-white"
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div>
+                    <label className="text-sm text-gray-400 mb-1 block">Nome do Jogador</label>
+                    <Input
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      placeholder="Nome do Jogador"
+                      className="bg-gray-700 border-gray-600 text-white"
+                    />
+                  </div>
+                  {(isSuper16 || isKingOfCourt) && (
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="edit-head-of-key"
+                        checked={editIsHeadOfKey}
+                        onCheckedChange={(checked) => setEditIsHeadOfKey(checked === true)}
+                        className="border-yellow-400 data-[state=checked]:bg-yellow-500"
+                      />
+                      <label htmlFor="edit-head-of-key" className="text-sm text-yellow-400 font-medium">
+                        Cabeça de Chave
+                      </label>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
 
-          <div className="flex justify-end gap-2 mt-6">
-            <Button
-              variant="outline"
-              onClick={() => setEditModalOpen(false)}
-              className="border-gray-600 text-gray-300 hover:bg-gray-700"
-            >
-              Cancelar
-            </Button>
-            <Button
-              onClick={handleSaveEdit}
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              Salvar
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+            <div className="flex justify-end gap-2 mt-6">
+              <Button
+                variant="outline"
+                onClick={() => setEditModalOpen(false)}
+                className="border-gray-600 text-gray-300 hover:bg-gray-700"
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleSaveEdit}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                Salvar
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 };
