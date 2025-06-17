@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Printer, Download } from "lucide-react";
@@ -32,21 +31,39 @@ const TournamentReport = ({ tournamentData }: TournamentReportProps) => {
 
   // Enhanced team name function for Super 16 format
   const getTeamName = (teamId: any) => {
+    console.log('TournamentReport - Processing teamId:', teamId, 'Tournament format:', tournamentData.format);
+    
     if (tournamentData?.format === 'super16') {
       // For Super 16, teamId should be an array of player IDs
       if (Array.isArray(teamId)) {
+        console.log('TournamentReport - teamId is array:', teamId);
         const playerNames = teamId.map(playerId => {
+          const player = (tournamentData.players || []).find(p => p.id === playerId);
+          console.log('TournamentReport - Found player:', player);
+          return player ? player.name : 'Jogador';
+        });
+        const result = playerNames.join(' / ');
+        console.log('TournamentReport - Final team name:', result);
+        return result;
+      }
+      
+      // If it's a string, might be a team ID - check teams first
+      const team = (tournamentData.teams || []).find(t => t.id === teamId);
+      if (team && Array.isArray(team.playerIds)) {
+        console.log('TournamentReport - Found team with playerIds:', team);
+        const playerNames = team.playerIds.map(playerId => {
           const player = (tournamentData.players || []).find(p => p.id === playerId);
           return player ? player.name : 'Jogador';
         });
         return playerNames.join(' / ');
       }
-      // If it's not an array, try to find the team
-      const team = (tournamentData.teams || []).find(t => t.id === teamId);
-      if (team) {
-        return team.name;
+      
+      // Last fallback - might be a single player ID
+      const player = (tournamentData.players || []).find(p => p.id === teamId);
+      if (player) {
+        return player.name;
       }
-      // Last fallback
+      
       return 'Dupla';
     }
     
@@ -63,16 +80,56 @@ const TournamentReport = ({ tournamentData }: TournamentReportProps) => {
   };
 
   const getFinalStandings = () => {
-    const participants =
-      tournamentData.teams?.length > 0
-        ? tournamentData.teams
-        : tournamentData.players || [];
-    const sorted = [...participants].sort((a: any, b: any) => {
+    const teams = tournamentData.teams?.length > 0 ? tournamentData.teams : tournamentData.players || [];
+    const matches = tournamentData.matches || [];
+    
+    // Calculate stats from matches for each team
+    const teamStats = teams.map(team => ({
+      ...team,
+      gamesPlayed: 0,
+      wins: 0,
+      pointsFor: 0,
+      pointsAgainst: 0,
+      name: getTeamName(team.id)
+    }));
+
+    // Calculate stats from completed matches
+    matches.forEach(match => {
+      if (match.score1 !== null && match.score2 !== null && match.winnerId) {
+        match.teamIds.forEach((teamId, index) => {
+          const team = teamStats.find(t => {
+            if (tournamentData.format === 'super16') {
+              // For super16, compare arrays or IDs properly
+              if (Array.isArray(teamId) && Array.isArray(t.playerIds)) {
+                return JSON.stringify(teamId.sort()) === JSON.stringify(t.playerIds.sort());
+              }
+              return t.id === teamId;
+            }
+            return t.id === teamId;
+          });
+          
+          if (team) {
+            team.gamesPlayed += 1;
+            team.pointsFor += index === 0 ? match.score1 : match.score2;
+            team.pointsAgainst += index === 0 ? match.score2 : match.score1;
+            
+            if (match.winnerId === teamId || 
+                (Array.isArray(teamId) && Array.isArray(match.winnerId) && 
+                 JSON.stringify(teamId.sort()) === JSON.stringify(match.winnerId.sort()))) {
+              team.wins += 1;
+            }
+          }
+        });
+      }
+    });
+
+    const sorted = [...teamStats].sort((a: any, b: any) => {
       if ((b.wins || 0) !== (a.wins || 0)) return (b.wins || 0) - (a.wins || 0);
       const aDiff = (a.pointsFor || 0) - (a.pointsAgainst || 0);
       const bDiff = (b.pointsFor || 0) - (b.pointsAgainst || 0);
       return bDiff - aDiff;
     });
+    
     return sorted.map((participant: any, index: number) => ({
       ...participant,
       position: index + 1,
@@ -113,12 +170,26 @@ const TournamentReport = ({ tournamentData }: TournamentReportProps) => {
 
     if (finalMatch) {
       champion = getTeamName(finalMatch.winnerId);
-      const teamLoser = finalMatch.teamIds.find((tid: any) => tid !== finalMatch.winnerId);
+      const teamLoser = finalMatch.teamIds.find((tid: any) => {
+        if (Array.isArray(tid) && Array.isArray(finalMatch.winnerId)) {
+          return JSON.stringify(tid.sort()) !== JSON.stringify(finalMatch.winnerId.sort());
+        }
+        return tid !== finalMatch.winnerId;
+      });
       vice = getTeamName(teamLoser);
     }
     if (thirdMatch) {
       third = getTeamName(thirdMatch.winnerId);
     }
+
+    // If no matches completed, get from standings
+    if (!champion && !vice && !third) {
+      const standings = getFinalStandings();
+      if (standings.length >= 1) champion = standings[0].name || "-";
+      if (standings.length >= 2) vice = standings[1].name || "-";
+      if (standings.length >= 3) third = standings[2].name || "-";
+    }
+
     return { champion, vice, third };
   };
 
