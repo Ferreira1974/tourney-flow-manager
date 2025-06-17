@@ -16,7 +16,12 @@ export const generateMatches = (tournamentData: any) => {
       }
       break;
     case 'super16':
-      matches = generateSuper16Matches(teams || [], tournamentData);
+      const super16Result = generateSuper16ChampionshipMatches(teams || [], status);
+      matches = super16Result.matches;
+      // Update tournament data with groups if they were created
+      if (super16Result.groups && super16Result.groups.length > 0) {
+        tournamentData.groups = super16Result.groups;
+      }
       break;
     case 'king_of_the_court':
       matches = generateKingOfCourtMatches(teams || [], status);
@@ -125,6 +130,68 @@ const generateDoublesGroupStageMatches = (teams: any[]) => {
   return { matches, groups };
 };
 
+const generateSuper16ChampionshipMatches = (teams: any[], status: string) => {
+  if (status === 'group_stage') {
+    return generateSuper16GroupStageMatches(teams);
+  } else if (status === 'round_of_16') {
+    return { matches: generateDoublesEliminationMatches(teams, 'round_of_16'), groups: [] };
+  } else if (status === 'quarterfinals') {
+    return { matches: generateDoublesEliminationMatches(teams, 'quarterfinals'), groups: [] };
+  } else if (status === 'semifinals') {
+    return { matches: generateDoublesEliminationMatches(teams, 'semifinals'), groups: [] };
+  } else if (status === 'final') {
+    return { matches: generateDoublesEliminationMatches(teams, 'final'), groups: [] };
+  } else if (status === 'third_place') {
+    return { matches: generateDoublesEliminationMatches(teams, 'third_place'), groups: [] };
+  }
+  
+  return { matches: [], groups: [] };
+};
+
+const generateSuper16GroupStageMatches = (teams: any[]) => {
+  // Embaralhar times para sorteio das chaves
+  const shuffledTeams = [...teams].sort(() => Math.random() - 0.5);
+  
+  // Determinar número de grupos baseado no número de duplas
+  const numTeams = shuffledTeams.length;
+  let numGroups = 0;
+  let teamsPerGroup = 0;
+  
+  if (numTeams === 12) { // 24 jogadores = 12 duplas = 3 grupos de 4
+    numGroups = 3;
+    teamsPerGroup = 4;
+  } else if (numTeams === 16) { // 32 jogadores = 16 duplas = 4 grupos de 4
+    numGroups = 4;
+    teamsPerGroup = 4;
+  } else {
+    // Fallback para outros números
+    numGroups = Math.ceil(numTeams / 4);
+    teamsPerGroup = 4;
+  }
+  
+  // Criar grupos
+  const groups: any[] = [];
+  for (let i = 0; i < numGroups; i++) {
+    groups.push({
+      id: `g_group_stage_${i}`,
+      name: `Grupo ${String.fromCharCode(65 + i)}`, // A, B, C, D
+      teamIds: []
+    });
+  }
+  
+  // Distribuir times nos grupos
+  shuffledTeams.forEach((team, index) => {
+    const groupIndex = Math.floor(index / teamsPerGroup);
+    if (groupIndex < numGroups) {
+      groups[groupIndex].teamIds.push(team.id);
+    }
+  });
+
+  const matches = generateRoundRobinMatches(groups, 'group_stage');
+  
+  return { matches, groups };
+};
+
 const generateDoublesEliminationMatches = (qualifiedTeams: any[], phase: string) => {
   const matches: any[] = [];
   let matchIdCounter = 0;
@@ -210,31 +277,6 @@ const createOlympicCrossing = (teams: any[]) => {
   return pairs;
 };
 
-const generateSuper16Matches = (teams: any[], tournamentData: any) => {
-  if (teams.length !== 8) return []; // Should have 8 teams (16 players in doubles)
-  
-  // Generate group stage with 2 groups of 4 teams each
-  const groups = [
-    {
-      id: 'g_group_stage_0',
-      name: 'Grupo A',
-      teamIds: teams.slice(0, 4).map(t => t.id) // Use team IDs directly
-    },
-    {
-      id: 'g_group_stage_1', 
-      name: 'Grupo B',
-      teamIds: teams.slice(4, 8).map(t => t.id) // Use team IDs directly
-    }
-  ];
-
-  // Store groups in tournament data for later use
-  if (tournamentData) {
-    tournamentData.groups = groups;
-  }
-
-  return generateRoundRobinMatches(groups, 'group_stage');
-};
-
 const generateKingOfCourtMatches = (teams: any[], phase: string) => {
   if (phase === 'phase1_groups') {
     // Create 4 groups of 4 teams each
@@ -311,7 +353,7 @@ export const getQualifiedTeams = (tournamentData: any, phase: string) => {
   const matches = tournamentData.matches || [];
   
   if (phase === 'group_stage') {
-    // Get top 2 teams from each group for doubles championship
+    // Get top 2 teams from each group for doubles championship and super16
     const groups = tournamentData.groups || [];
     const qualifiedTeams: any[] = [];
     

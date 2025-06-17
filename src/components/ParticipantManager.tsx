@@ -118,7 +118,7 @@ const ParticipantManager = ({ tournamentData, onUpdate }: ParticipantManagerProp
       case 'super8':
         return playerCount === 8;
       case 'super16':
-        return playerCount === 16;
+        return playerCount === 24 || playerCount === 32; // Updated to allow 24 or 32 players
       case 'doubles_groups':
         return playerCount >= 8 && playerCount % 2 === 0; // At least 8, even number
       case 'king_of_the_court':
@@ -133,7 +133,7 @@ const ParticipantManager = ({ tournamentData, onUpdate }: ParticipantManagerProp
       case 'super8':
         return 'Exatamente 8 jogadores';
       case 'super16':
-        return 'Exatamente 16 jogadores';
+        return '24 jogadores (3 chaves) ou 32 jogadores (4 chaves)'; // Updated description
       case 'doubles_groups':
         return 'Mínimo 8 jogadores (número par)';
       case 'king_of_the_court':
@@ -155,7 +155,7 @@ const ParticipantManager = ({ tournamentData, onUpdate }: ParticipantManagerProp
 
     const updatedData = {
       ...tournamentData,
-      status: tournamentData.format === 'doubles_groups' ? 'group_stage' : 'playing',
+      status: tournamentData.format === 'doubles_groups' || tournamentData.format === 'super16' ? 'group_stage' : 'playing',
     };
 
     onUpdate(updatedData);
@@ -245,8 +245,8 @@ const ParticipantManager = ({ tournamentData, onUpdate }: ParticipantManagerProp
               `Adicione mais ${8 - playerCount} participante(s) para atingir o mínimo.`}
             {playerCount < 8 && tournamentData.format === 'super8' && 
               `Adicione mais ${8 - playerCount} participante(s).`}
-            {playerCount < 16 && tournamentData.format === 'super16' && 
-              `Adicione mais ${16 - playerCount} participante(s).`}
+            {playerCount !== 24 && playerCount !== 32 && tournamentData.format === 'super16' && 
+              `Adicione participantes para atingir 24 (3 chaves) ou 32 jogadores (4 chaves).`}
             {playerCount < 16 && tournamentData.format === 'king_of_the_court' && 
               `Adicione mais ${16 - playerCount} participante(s).`}
             {tournamentData.format === 'doubles_groups' && playerCount >= 8 && playerCount % 2 !== 0 && 

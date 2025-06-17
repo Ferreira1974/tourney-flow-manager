@@ -156,8 +156,8 @@ const MatchManager = ({ tournamentData, onUpdate }: MatchManagerProps) => {
       description: "Resultado registrado com sucesso!",
     });
 
-    // Check if current phase is completed for doubles tournament
-    if (tournamentData.format === 'doubles_groups') {
+    // Check if current phase is completed for doubles tournament and super16
+    if (['doubles_groups', 'super16'].includes(tournamentData.format)) {
       checkDoublesPhaseCompletion(updatedMatches, tournamentData, onUpdate, toast);
     } else {
       // Check if all matches are completed to update tournament status to finished
@@ -186,7 +186,7 @@ const MatchManager = ({ tournamentData, onUpdate }: MatchManagerProps) => {
   };
 
   const renderGroupsDisplay = () => {
-    if (tournamentData.format !== 'doubles_groups' || tournamentData.status !== 'group_stage') {
+    if (!['doubles_groups', 'super16'].includes(tournamentData.format) || tournamentData.status !== 'group_stage') {
       return null;
     }
 
@@ -611,8 +611,8 @@ const MatchManager = ({ tournamentData, onUpdate }: MatchManagerProps) => {
     );
   }
 
-  // For doubles tournament, show only "Fase Atual" tab, e sempre mostrar as partidas da final + 3º lugar quando a fase estiver nessas
-  if (tournamentData.format === 'doubles_groups') {
+  // For doubles tournament and super16, show only "Fase Atual" tab, e sempre mostrar as partidas da final + 3º lugar quando a fase estiver nessas
+  if (['doubles_groups', 'super16'].includes(tournamentData.format)) {
     const completedPhases = getCompletedPhases();
     const currentPhase = tournamentData.status;
 
