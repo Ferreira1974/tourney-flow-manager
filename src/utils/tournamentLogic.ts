@@ -17,7 +17,7 @@ export const generateMatches = (tournamentData: any) => {
       }
       break;
     case 'super16':
-      matches = generateSuper16Matches(teams || []);
+      matches = generateSuper16Matches(teams || [], tournamentData);
       break;
     case 'king_of_the_court':
       matches = generateKingOfCourtMatches(teams || [], status);
@@ -211,7 +211,7 @@ const createOlympicCrossing = (teams: any[]) => {
   return pairs;
 };
 
-const generateSuper16Matches = (teams: any[]) => {
+const generateSuper16Matches = (teams: any[], tournamentData: any) => {
   if (teams.length !== 8) return []; // Should have 8 teams (16 players in doubles)
   
   // Generate group stage with 2 groups of 4 teams each
@@ -219,16 +219,21 @@ const generateSuper16Matches = (teams: any[]) => {
     {
       id: 'g_group_stage_0',
       name: 'Grupo A',
-      // Use the team IDs directly (which contain the player IDs)
-      teamIds: teams.slice(0, 4).map(t => t.id)
+      // For Super 16, use the team playerIds arrays directly
+      teamIds: teams.slice(0, 4).map(t => t.playerIds || t.id)
     },
     {
       id: 'g_group_stage_1', 
       name: 'Grupo B',
-      // Use the team IDs directly (which contain the player IDs)
-      teamIds: teams.slice(4, 8).map(t => t.id)
+      // For Super 16, use the team playerIds arrays directly
+      teamIds: teams.slice(4, 8).map(t => t.playerIds || t.id)
     }
   ];
+
+  // Store groups in tournament data for later use
+  if (tournamentData) {
+    tournamentData.groups = groups;
+  }
 
   return generateRoundRobinMatches(groups, 'group_stage');
 };

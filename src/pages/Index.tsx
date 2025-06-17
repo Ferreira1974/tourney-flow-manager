@@ -73,24 +73,39 @@ const Index = () => {
   };
 
   const getTeamDisplayName = (teamId: any) => {
+    console.log('Index - Processing teamId:', teamId, 'Tournament format:', tournamentData.format);
+    
     // Enhanced for Super 16 format
     if (tournamentData.format === 'super16') {
       if (Array.isArray(teamId)) {
+        console.log('Index - teamId is array:', teamId);
         const playerNames = teamId.map(playerId => {
           const player = (tournamentData.players || []).find(p => p.id === playerId);
+          console.log('Index - Found player:', player);
           return player ? player.name : 'Jogador';
         });
-        return playerNames.join(' / ');
+        const result = playerNames.join(' / ');
+        console.log('Index - Final team name:', result);
+        return result;
       }
-      // If it's not an array, try to find the team by ID
+      
+      // If it's a string, might be a team ID - check teams first
       const team = (tournamentData.teams || []).find(t => t.id === teamId);
       if (team && Array.isArray(team.playerIds)) {
+        console.log('Index - Found team with playerIds:', team);
         const playerNames = team.playerIds.map(playerId => {
           const player = (tournamentData.players || []).find(p => p.id === playerId);
           return player ? player.name : 'Jogador';
         });
         return playerNames.join(' / ');
       }
+      
+      // Last fallback - might be a single player ID
+      const player = (tournamentData.players || []).find(p => p.id === teamId);
+      if (player) {
+        return player.name;
+      }
+      
       return 'Dupla';
     }
     

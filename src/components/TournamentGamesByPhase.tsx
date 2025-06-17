@@ -17,25 +17,39 @@ const TournamentGamesByPhase = ({
 }: TournamentGamesByPhaseProps) => {
   // Enhanced team name function for Super 16 format
   const getEnhancedTeamName = (teamId: any) => {
+    console.log('TournamentGamesByPhase - Processing teamId:', teamId, 'Tournament format:', tournamentData?.format);
+    
     if (tournamentData?.format === 'super16') {
       // For Super 16, teamId should be an array of player IDs
       if (Array.isArray(teamId)) {
+        console.log('TournamentGamesByPhase - teamId is array:', teamId);
         const playerNames = teamId.map(playerId => {
           const player = (tournamentData.players || []).find(p => p.id === playerId);
+          console.log('TournamentGamesByPhase - Found player:', player);
           return player ? player.name : 'Jogador';
         });
-        return playerNames.join(' / ');
+        const result = playerNames.join(' / ');
+        console.log('TournamentGamesByPhase - Final team name:', result);
+        return result;
       }
-      // If it's not an array, try to find the team by ID
+      
+      // If it's a string, might be a team ID - check teams first
       const team = (tournamentData.teams || []).find(t => t.id === teamId);
       if (team && Array.isArray(team.playerIds)) {
+        console.log('TournamentGamesByPhase - Found team with playerIds:', team);
         const playerNames = team.playerIds.map(playerId => {
           const player = (tournamentData.players || []).find(p => p.id === playerId);
           return player ? player.name : 'Jogador';
         });
         return playerNames.join(' / ');
       }
-      // Last fallback
+      
+      // Last fallback - might be a single player ID
+      const player = (tournamentData.players || []).find(p => p.id === teamId);
+      if (player) {
+        return player.name;
+      }
+      
       return 'Dupla';
     }
     

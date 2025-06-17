@@ -3,24 +3,39 @@ import React from "react";
 import { Trophy } from "lucide-react";
 
 function getTeamName(teamId: any, tournamentData: any) {
+  console.log('DoublesGamesByPhase - Processing teamId:', teamId, 'Tournament format:', tournamentData.format);
+  
   // Handle Super 16 format where teamIds are arrays of player IDs
   if (tournamentData.format === 'super16') {
     if (Array.isArray(teamId)) {
+      console.log('DoublesGamesByPhase - teamId is array:', teamId);
       const playerNames = teamId.map((playerId: string) => {
         const player = (tournamentData.players || []).find((p: any) => p.id === playerId);
+        console.log('DoublesGamesByPhase - Found player:', player);
         return player ? player.name : "Jogador";
       });
-      return playerNames.join(" / ");
+      const result = playerNames.join(" / ");
+      console.log('DoublesGamesByPhase - Final team name:', result);
+      return result;
     }
-    // If it's not an array, try to find the team by ID
+    
+    // If it's a string, might be a team ID - check teams first
     const team = (tournamentData.teams || []).find((t: any) => t.id === teamId);
     if (team && Array.isArray(team.playerIds)) {
+      console.log('DoublesGamesByPhase - Found team with playerIds:', team);
       const playerNames = team.playerIds.map((playerId: string) => {
         const player = (tournamentData.players || []).find((p: any) => p.id === playerId);
         return player ? player.name : "Jogador";
       });
       return playerNames.join(" / ");
     }
+    
+    // Last fallback - might be a single player ID
+    const player = (tournamentData.players || []).find((p: any) => p.id === teamId);
+    if (player) {
+      return player.name;
+    }
+    
     return "Dupla";
   }
   
