@@ -120,7 +120,7 @@ const MatchManager = ({ tournamentData, onUpdate }: MatchManagerProps) => {
       
       onUpdate({ matches: updatedMatches, players });
     } else {
-      // For team-based formats
+      // For team-based formats (doubles_groups and super16)
       const team1 = teams.find(t => t.id === match.teamIds[0]);
       const team2 = teams.find(t => t.id === match.teamIds[1]);
 
@@ -597,23 +597,78 @@ const MatchManager = ({ tournamentData, onUpdate }: MatchManagerProps) => {
 
   // Show final results when tournament is finished
   if (tournamentData.status === 'finished') {
+    const finalMatch = matches.find(match => match.phase === 'final' && match.winnerId);
+    const thirdPlaceMatch = matches.find(match => match.phase === 'third_place' && match.winnerId);
+
+    if (finalMatch && thirdPlaceMatch) {
+      const champion = (tournamentData.teams || []).find(t => t.id === finalMatch.winnerId);
+      const finalist = (tournamentData.teams || []).find(t => t.id === finalMatch.teamIds.find(id => id !== finalMatch.winnerId));
+      const thirdPlace = (tournamentData.teams || []).find(t => t.id === thirdPlaceMatch.winnerId);
+
+      return (
+        <div className="space-y-6">
+          <Card className="bg-gradient-to-r from-yellow-600 to-yellow-700 border-yellow-500 p-8 mb-6">
+            <h2 className="text-3xl font-bold text-white mb-6 text-center flex items-center justify-center gap-3">
+              <Trophy className="w-8 h-8" />
+              Resultado Final do Torneio
+            </h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Campeão */}
+              <div className="bg-yellow-500 rounded-lg p-6 text-center">
+                <Crown className="w-12 h-12 text-yellow-900 mx-auto mb-3" />
+                <h3 className="text-xl font-bold text-yellow-900 mb-2">CAMPEÃO</h3>
+                <p className="text-2xl font-bold text-yellow-900">{champion?.name || 'Dupla'}</p>
+                <div className="mt-2 text-lg font-semibold text-yellow-800">
+                  {finalMatch.score1} x {finalMatch.score2}
+                </div>
+              </div>
+
+              {/* Finalista */}
+              <div className="bg-gray-300 rounded-lg p-6 text-center">
+                <Medal className="w-12 h-12 text-gray-700 mx-auto mb-3" />
+                <h3 className="text-xl font-bold text-gray-700 mb-2">FINALISTA</h3>
+                <p className="text-2xl font-bold text-gray-700">{finalist?.name || 'Dupla'}</p>
+                <div className="mt-2 text-lg font-semibold text-gray-600">
+                  Vice-Campeão
+                </div>
+              </div>
+
+              {/* Terceiro Lugar */}
+              <div className="bg-orange-400 rounded-lg p-6 text-center">
+                <Trophy className="w-12 h-12 text-orange-800 mx-auto mb-3" />
+                <h3 className="text-xl font-bold text-orange-800 mb-2">3º LUGAR</h3>
+                <p className="text-2xl font-bold text-orange-800">{thirdPlace?.name || 'Dupla'}</p>
+                <div className="mt-2 text-lg font-semibold text-orange-700">
+                  {thirdPlaceMatch.score1} x {thirdPlaceMatch.score2}
+                </div>
+              </div>
+            </div>
+          </Card>
+          <Card className="bg-gray-800 border-gray-700 p-8 text-center">
+            <Trophy className="w-16 h-16 text-yellow-400 mx-auto mb-4" />
+            <h2 className="text-3xl font-bold text-white mb-2">Torneio Finalizado</h2>
+            <p className="text-gray-400 text-lg">
+              Todos os jogos foram concluídos! Verifique a classificação final na aba "Classificação".
+            </p>
+          </Card>
+        </div>
+      );
+    }
+
     return (
-      <div className="space-y-6">
-        {renderFinalResults()}
-        <Card className="bg-gray-800 border-gray-700 p-8 text-center">
-          <Trophy className="w-16 h-16 text-yellow-400 mx-auto mb-4" />
-          <h2 className="text-3xl font-bold text-white mb-2">Torneio Finalizado</h2>
-          <p className="text-gray-400 text-lg">
-            Todos os jogos foram concluídos! Verifique a classificação final na aba "Classificação".
-          </p>
-        </Card>
-      </div>
+      <Card className="bg-gray-800 border-gray-700 p-8 text-center">
+        <Trophy className="w-16 h-16 text-yellow-400 mx-auto mb-4" />
+        <h2 className="text-3xl font-bold text-white mb-2">Torneio Finalizado</h2>
+        <p className="text-gray-400 text-lg">
+          Todos os jogos foram concluídos! Verifique a classificação final na aba "Classificação".
+        </p>
+      </Card>
     );
   }
 
-  // For doubles tournament and super16, show only "Fase Atual" tab, e sempre mostrar as partidas da final + 3º lugar quando a fase estiver nessas
+  // For doubles tournament and super16, show only "Fase Atual" tab
   if (['doubles_groups', 'super16'].includes(tournamentData.format)) {
-    const completedPhases = getCompletedPhases();
     const currentPhase = tournamentData.status;
 
     // Sempre mostrar as finais e disputa de 3º nas fases adequadas
@@ -645,10 +700,6 @@ const MatchManager = ({ tournamentData, onUpdate }: MatchManagerProps) => {
 
     return (
       <div className="space-y-6">
-        {/* Removido botão azul "Imprimir lista de jogos / backup" */}
-        {/* Modais de backup e histórico permanecem, se implementados (ajuste conforme necessidade) */}
-        {renderBackupModal()}
-        {/* resto da aba jogos padrão */}
         <Tabs defaultValue="current" className="w-full">
           <TabsList className="grid w-full grid-cols-1 bg-gray-800 border-gray-700">
             <TabsTrigger value="current" className="data-[state=active]:bg-blue-600">

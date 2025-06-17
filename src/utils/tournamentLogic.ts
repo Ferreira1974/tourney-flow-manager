@@ -1,3 +1,4 @@
+
 export const generateMatches = (tournamentData: any) => {
   const { format, teams, players, status } = tournamentData;
   
@@ -155,18 +156,15 @@ const generateSuper16GroupStageMatches = (teams: any[]) => {
   // Determinar número de grupos baseado no número de duplas
   const numTeams = shuffledTeams.length;
   let numGroups = 0;
-  let teamsPerGroup = 0;
+  let teamsPerGroup = 4; // Sempre 4 duplas por grupo
   
   if (numTeams === 12) { // 24 jogadores = 12 duplas = 3 grupos de 4
     numGroups = 3;
-    teamsPerGroup = 4;
   } else if (numTeams === 16) { // 32 jogadores = 16 duplas = 4 grupos de 4
     numGroups = 4;
-    teamsPerGroup = 4;
   } else {
-    // Fallback para outros números
+    // Fallback caso não seja exatamente 12 ou 16
     numGroups = Math.ceil(numTeams / 4);
-    teamsPerGroup = 4;
   }
   
   // Criar grupos
@@ -179,7 +177,7 @@ const generateSuper16GroupStageMatches = (teams: any[]) => {
     });
   }
   
-  // Distribuir times nos grupos
+  // Distribuir times nos grupos (4 por grupo)
   shuffledTeams.forEach((team, index) => {
     const groupIndex = Math.floor(index / teamsPerGroup);
     if (groupIndex < numGroups) {
@@ -223,7 +221,7 @@ const generateDoublesEliminationMatches = (qualifiedTeams: any[], phase: string)
       });
     }
   } else if (phase === "semifinals" && qualifiedTeams.length === 4) {
-    // CRUZAMENTO OLÍMPICO: 1º x 4º, 2º x 3º (corrigido para NUNCA criar 3 jogos!)
+    // CRUZAMENTO OLÍMPICO: 1º x 4º, 2º x 3º
     matches.push({
       id: `m_semifinals_${matchIdCounter++}`,
       phase: "semifinals",
@@ -243,7 +241,7 @@ const generateDoublesEliminationMatches = (qualifiedTeams: any[], phase: string)
       winnerId: null
     });
   } else {
-    // Fases eliminatórias com cruzamento olímpico tradicional (oitavas/quartas, se existir)
+    // Fases eliminatórias com cruzamento olímpico tradicional
     const pairedTeams = createOlympicCrossing(qualifiedTeams);
     
     pairedTeams.forEach(pair => {
@@ -423,8 +421,10 @@ export const getQualifiedTeams = (tournamentData: any, phase: string) => {
 
 export const getNextPhase = (currentPhase: string, numQualifiedTeams: number) => {
   if (currentPhase === 'group_stage') {
+    // Para Super 16: com 6 ou 8 qualificados (2 de cada grupo)
     if (numQualifiedTeams >= 16) return 'round_of_16';
-    if (numQualifiedTeams >= 8) return 'quarterfinals';
+    if (numQualifiedTeams >= 8) return 'quarterfinals';  // 8 qualificados vão direto para quartas
+    if (numQualifiedTeams >= 6) return 'quarterfinals';  // 6 qualificados também vão para quartas (apenas 3 grupos)
     if (numQualifiedTeams >= 4) return 'semifinals';
     if (numQualifiedTeams === 2) return 'final';
   }

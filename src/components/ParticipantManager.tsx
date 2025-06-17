@@ -118,9 +118,9 @@ const ParticipantManager = ({ tournamentData, onUpdate }: ParticipantManagerProp
       case 'super8':
         return playerCount === 8;
       case 'super16':
-        return playerCount === 24 || playerCount === 32; // Updated to allow 24 or 32 players
+        return playerCount === 24 || playerCount === 32; // 24 ou 32 jogadores
       case 'doubles_groups':
-        return playerCount >= 8 && playerCount % 2 === 0; // At least 8, even number
+        return playerCount >= 8 && playerCount % 2 === 0;
       case 'king_of_the_court':
         return playerCount === 16;
       default:
@@ -133,7 +133,7 @@ const ParticipantManager = ({ tournamentData, onUpdate }: ParticipantManagerProp
       case 'super8':
         return 'Exatamente 8 jogadores';
       case 'super16':
-        return '24 jogadores (3 chaves) ou 32 jogadores (4 chaves)'; // Updated description
+        return '24 jogadores (3 grupos) ou 32 jogadores (4 grupos)'; // Corrigido
       case 'doubles_groups':
         return 'Mínimo 8 jogadores (número par)';
       case 'king_of_the_court':
@@ -246,7 +246,7 @@ const ParticipantManager = ({ tournamentData, onUpdate }: ParticipantManagerProp
             {playerCount < 8 && tournamentData.format === 'super8' && 
               `Adicione mais ${8 - playerCount} participante(s).`}
             {playerCount !== 24 && playerCount !== 32 && tournamentData.format === 'super16' && 
-              `Adicione participantes para atingir 24 (3 chaves) ou 32 jogadores (4 chaves).`}
+              `Adicione participantes para atingir 24 (3 grupos) ou 32 jogadores (4 grupos).`}
             {playerCount < 16 && tournamentData.format === 'king_of_the_court' && 
               `Adicione mais ${16 - playerCount} participante(s).`}
             {tournamentData.format === 'doubles_groups' && playerCount >= 8 && playerCount % 2 !== 0 && 
