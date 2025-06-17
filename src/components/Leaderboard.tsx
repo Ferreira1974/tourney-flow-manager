@@ -186,11 +186,11 @@ const Leaderboard = ({ tournamentData }: LeaderboardProps) => {
         </h2>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Primeiro Lugar */}
+          {/* Campeão */}
           {top3[0] && (
             <div className="bg-yellow-500 rounded-lg p-6 text-center">
               <Crown className="w-12 h-12 text-yellow-900 mx-auto mb-3" />
-              <h3 className="text-xl font-bold text-yellow-900 mb-2">1º LUGAR</h3>
+              <h3 className="text-xl font-bold text-yellow-900 mb-2">CAMPEÃO</h3>
               <p className="text-2xl font-bold text-yellow-900">{top3[0].displayName}</p>
               <div className="mt-2 text-lg font-semibold text-yellow-800">
                 {top3[0].wins} vitórias
@@ -198,11 +198,11 @@ const Leaderboard = ({ tournamentData }: LeaderboardProps) => {
             </div>
           )}
 
-          {/* Segundo Lugar */}
+          {/* Finalista */}
           {top3[1] && (
             <div className="bg-gray-300 rounded-lg p-6 text-center">
               <Medal className="w-12 h-12 text-gray-700 mx-auto mb-3" />
-              <h3 className="text-xl font-bold text-gray-700 mb-2">2º LUGAR</h3>
+              <h3 className="text-xl font-bold text-gray-700 mb-2">FINALISTA</h3>
               <p className="text-2xl font-bold text-gray-700">{top3[1].displayName}</p>
               <div className="mt-2 text-lg font-semibold text-gray-600">
                 {top3[1].wins} vitórias
@@ -210,7 +210,7 @@ const Leaderboard = ({ tournamentData }: LeaderboardProps) => {
             </div>
           )}
 
-          {/* Terceiro Lugar */}
+          {/* 3º Lugar */}
           {top3[2] && (
             <div className="bg-orange-400 rounded-lg p-6 text-center">
               <Trophy className="w-12 h-12 text-orange-800 mx-auto mb-3" />

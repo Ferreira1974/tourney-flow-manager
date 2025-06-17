@@ -41,6 +41,29 @@ const ParticipantManager = ({ tournamentData, onUpdate }: ParticipantManagerProp
       players: [...(tournamentData.players || []), newPlayer],
     };
 
+    // For Super 16 format, automatically create teams when we have pairs
+    if (tournamentData.format === 'super16') {
+      const totalPlayers = updatedData.players.length;
+      if (totalPlayers % 2 === 0 && totalPlayers >= 2) {
+        // Create teams from pairs of players
+        const teams = [];
+        for (let i = 0; i < totalPlayers; i += 2) {
+          if (i + 1 < totalPlayers) {
+            teams.push({
+              id: `team_${Date.now()}_${i}`,
+              name: `${updatedData.players[i].name} / ${updatedData.players[i + 1].name}`,
+              playerIds: [updatedData.players[i].id, updatedData.players[i + 1].id],
+              gamesPlayed: 0,
+              wins: 0,
+              pointsFor: 0,
+              pointsAgainst: 0,
+            });
+          }
+        }
+        updatedData.teams = teams;
+      }
+    }
+
     onUpdate(updatedData);
     setNewPlayerName('');
     
@@ -58,6 +81,27 @@ const ParticipantManager = ({ tournamentData, onUpdate }: ParticipantManagerProp
         ...tournamentData,
         players: tournamentData.players?.filter((p: any) => p.id !== playerId) || [],
       };
+
+      // For Super 16 format, rebuild teams after removing a player
+      if (tournamentData.format === 'super16') {
+        const totalPlayers = updatedData.players.length;
+        const teams = [];
+        for (let i = 0; i < totalPlayers; i += 2) {
+          if (i + 1 < totalPlayers) {
+            teams.push({
+              id: `team_${Date.now()}_${i}`,
+              name: `${updatedData.players[i].name} / ${updatedData.players[i + 1].name}`,
+              playerIds: [updatedData.players[i].id, updatedData.players[i + 1].id],
+              gamesPlayed: 0,
+              wins: 0,
+              pointsFor: 0,
+              pointsAgainst: 0,
+            });
+          }
+        }
+        updatedData.teams = teams;
+      }
+
       onUpdate(updatedData);
       
       toast({
