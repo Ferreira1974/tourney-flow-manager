@@ -1,63 +1,17 @@
+// Conteúdo completo para: src/components/Leaderboard.tsx
 
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Crown, Trophy, Medal, Award } from 'lucide-react';
+import { getParticipantDisplayName } from '@/utils/tournamentLogic'; // <-- MUDANÇA: Importa a função centralizada
 
 interface LeaderboardProps {
   tournamentData: any;
 }
 
 const Leaderboard = ({ tournamentData }: LeaderboardProps) => {
-  const getTeamName = (teamId: any) => {
-    console.log('Leaderboard - Processing teamId:', teamId, 'Tournament format:', tournamentData.format);
-    
-    if (tournamentData?.format === 'super16') {
-      // For Super 16, teamId can be an array of player IDs or a team ID
-      if (Array.isArray(teamId)) {
-        console.log('Leaderboard - teamId is array:', teamId);
-        const playerNames = teamId.map(playerId => {
-          const player = (tournamentData.players || []).find(p => p.id === playerId);
-          console.log('Leaderboard - Found player:', player);
-          return player ? player.name : 'Jogador';
-        });
-        const result = playerNames.join(' / ');
-        console.log('Leaderboard - Final team name:', result);
-        return result;
-      }
-      
-      // If it's a string, might be a team ID - check teams first
-      const team = (tournamentData.teams || []).find(t => t.id === teamId);
-      if (team && Array.isArray(team.playerIds)) {
-        console.log('Leaderboard - Found team with playerIds:', team);
-        const playerNames = team.playerIds.map(playerId => {
-          const player = (tournamentData.players || []).find(p => p.id === playerId);
-          return player ? player.name : 'Jogador';
-        });
-        return playerNames.join(' / ');
-      }
-      
-      // Last fallback - might be a single player ID
-      const player = (tournamentData.players || []).find(p => p.id === teamId);
-      if (player) {
-        return player.name;
-      }
-      
-      return 'Dupla';
-    }
-    
-    // For other formats
-    if (Array.isArray(teamId)) {
-      const playerNames = teamId.map(playerId => {
-        const player = (tournamentData.players || []).find(p => p.id === playerId);
-        return player ? player.name : 'Jogador';
-      });
-      return playerNames.join(' / ');
-    }
-    
-    const team = (tournamentData.teams || []).find(t => t.id === teamId);
-    return team ? team.name : 'Time';
-  };
+  // MUDANÇA: Lógica de getTeamName foi removida daqui
 
   const getTeams = () => {
     if (['doubles_groups', 'super16'].includes(tournamentData.format)) {
@@ -76,28 +30,25 @@ const Leaderboard = ({ tournamentData }: LeaderboardProps) => {
     return [];
   };
 
-  // Calculate stats from matches for each team
   const calculateTeamStats = () => {
     const teams = getTeams();
     const matches = tournamentData.matches || [];
     
-    // Initialize stats
     const teamStats = teams.map(team => ({
       ...team,
       gamesPlayed: 0,
       wins: 0,
       pointsFor: 0,
       pointsAgainst: 0,
-      displayName: getTeamName(team.id)
+      // MUDANÇA: Usa a nova função
+      displayName: getParticipantDisplayName(team.id, tournamentData)
     }));
 
-    // Calculate stats from completed matches
     matches.forEach(match => {
       if (match.score1 !== null && match.score2 !== null && match.winnerId) {
         match.teamIds.forEach((teamId, index) => {
           const team = teamStats.find(t => {
             if (tournamentData.format === 'super16') {
-              // For super16, compare arrays or IDs properly
               if (Array.isArray(teamId) && Array.isArray(t.playerIds)) {
                 return JSON.stringify(teamId.sort()) === JSON.stringify(t.playerIds.sort());
               }
@@ -126,7 +77,6 @@ const Leaderboard = ({ tournamentData }: LeaderboardProps) => {
 
   const teams = calculateTeamStats();
   
-  // Sort teams by wins, then by point difference, then by points scored
   const sortedTeams = [...teams].sort((a, b) => {
     if (b.wins !== a.wins) return b.wins - a.wins;
     
@@ -172,7 +122,6 @@ const Leaderboard = ({ tournamentData }: LeaderboardProps) => {
     return (team.gamesPlayed || 0) - (team.wins || 0);
   };
 
-  // Show top 3 teams
   const renderTop3 = () => {
     if (sortedTeams.length === 0) return null;
 
@@ -186,7 +135,6 @@ const Leaderboard = ({ tournamentData }: LeaderboardProps) => {
         </h2>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Campeão */}
           {top3[0] && (
             <div className="bg-yellow-500 rounded-lg p-6 text-center">
               <Crown className="w-12 h-12 text-yellow-900 mx-auto mb-3" />
@@ -198,7 +146,6 @@ const Leaderboard = ({ tournamentData }: LeaderboardProps) => {
             </div>
           )}
 
-          {/* Finalista */}
           {top3[1] && (
             <div className="bg-gray-300 rounded-lg p-6 text-center">
               <Medal className="w-12 h-12 text-gray-700 mx-auto mb-3" />
@@ -210,7 +157,6 @@ const Leaderboard = ({ tournamentData }: LeaderboardProps) => {
             </div>
           )}
 
-          {/* 3º Lugar */}
           {top3[2] && (
             <div className="bg-orange-400 rounded-lg p-6 text-center">
               <Trophy className="w-12 h-12 text-orange-800 mx-auto mb-3" />
@@ -240,7 +186,6 @@ const Leaderboard = ({ tournamentData }: LeaderboardProps) => {
 
   return (
     <div className="space-y-6">
-      {/* Show top 3 teams */}
       {renderTop3()}
 
       <Card className="bg-gray-800 border-gray-700 p-6">
