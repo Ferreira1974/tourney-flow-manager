@@ -10,6 +10,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { getPhaseTitle, getPhaseIcon } from '@/utils/phaseUtils';
 import TournamentHeader from '@/components/TournamentHeader';
 import { generateMatches } from '@/utils/tournamentLogic';
+import TeamPreview from '@/components/TeamPreview'; // Importação do novo componente
+import { Swords, BarChart, FileText, Settings } from 'lucide-react'; // Importação dos ícones das abas
 
 const IndexPage = () => {
   const {
@@ -18,25 +20,11 @@ const IndexPage = () => {
     createTournament,
     clearTournament,
     loadTournament,
+    isLoading
   } = useTournamentData();
 
-  // LÓGICA RESTAURADA: Prepara o estado inicial do torneio corretamente
   const handleCreateTournament = (data: any) => {
-    let initialStatus = 'registration';
-    let teams = [];
-
-    if (data.format === 'super8') {
-      initialStatus = 'teams_defined';
-    } else if (data.format === 'doubles_groups') {
-        teams = Array.from({ length: data.size }, (_, i) => ({
-            id: `t_${i}`,
-            name: `Dupla ${i + 1}`,
-            playerIds: [],
-        }));
-        initialStatus = 'teams_defined';
-    }
-
-    createTournament({ ...data, status: initialStatus, teams });
+    createTournament(data);
   };
 
   const handleStartTournament = useCallback(() => {
@@ -58,13 +46,18 @@ const IndexPage = () => {
     });
   }, [tournamentData, updateTournament]);
 
-  // LÓGICA RESTAURADA: useMemo para o ícone da fase
-  const CurrentPhaseIcon = useMemo(() => {
-    if (tournamentData?.status) {
-      return getPhaseIcon(tournamentData.status);
-    }
-    return null;
-  }, [tournamentData?.status]);
+  const handleRedrawTeams = useCallback(() => {
+    if (!tournamentData) return;
+    // Volta para a fase de registro e limpa as duplas
+    updateTournament({
+        teams: [],
+        status: 'registration'
+    });
+  }, [tournamentData, updateTournament]);
+
+  if (isLoading) {
+    return <div>Carregando...</div>; // Ou um componente de Skeleton
+  }
 
   if (!tournamentData) {
     return (
@@ -75,23 +68,36 @@ const IndexPage = () => {
   }
   
   const renderContent = () => {
-    if (['registration', 'teams_defined'].includes(tournamentData.status)) {
+    // RENDERIZAÇÃO DA NOVA TELA DE PREVIEW
+    if (tournamentData.status === 'teams_defined') {
+      if (tournamentData.format === 'super16') {
+        return (
+          <TeamPreview
+            tournamentData={tournamentData}
+            onStartTournament={handleStartTournament}
+            onRedrawTeams={handleRedrawTeams}
+          />
+        );
+      }
+    }
+    
+    if (tournamentData.status === 'registration') {
         return (
             <ParticipantManager
                 tournamentData={tournamentData}
                 updateTournament={updateTournament}
-                onStartTournament={handleStartTournament}
             />
         );
     }
 
     return (
       <Tabs defaultValue="games" className="w-full">
+        {/* ÍCONES ADICIONADOS ÀS ABAS */}
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="games">Jogos</TabsTrigger>
-          <TabsTrigger value="leaderboard">Classificação</TabsTrigger>
-          <TabsTrigger value="report">Relatório</TabsTrigger>
-          <TabsTrigger value="settings">Configurações</TabsTrigger>
+          <TabsTrigger value="games"><Swords className="w-4 h-4 mr-2" />Jogos</TabsTrigger>
+          <TabsTrigger value="leaderboard"><BarChart className="w-4 h-4 mr-2" />Classificação</TabsTrigger>
+          <TabsTrigger value="report"><FileText className="w-4 h-4 mr-2" />Relatório</TabsTrigger>
+          <TabsTrigger value="settings"><Settings className="w-4 h-4 mr-2" />Configurações</TabsTrigger>
         </TabsList>
         <TabsContent value="games">
           <MatchManager 
@@ -114,16 +120,14 @@ const IndexPage = () => {
 
   return (
     <div className="container mx-auto p-4">
-      <Card className="bg-gray-800/50 border-gray-700 text-white mb-4">
-        <CardContent className="p-4">
-          <TournamentHeader
-              tournamentData={tournamentData}
-              onLoadTournament={loadTournament}
-              onClearTournament={clearTournament}
-            />
-        </CardContent>
-      </Card>
-      {renderContent()}
+      <TournamentHeader
+          tournamentData={tournamentData}
+          onLoadTournament={loadTournament}
+          onClearTournament={clearTournament}
+        />
+      <div className="mt-6">
+        {renderContent()}
+      </div>
     </div>
   );
 };
