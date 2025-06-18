@@ -1,218 +1,156 @@
-
-import React, { useState, useEffect } from 'react';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { useToast } from '@/hooks/use-toast';
+import React, { useCallback, useMemo } from 'react';
+import { useTournamentData } from '@/hooks/useTournamentData';
 import TournamentSetup from '@/components/TournamentSetup';
 import ParticipantManager from '@/components/ParticipantManager';
 import MatchManager from '@/components/MatchManager';
 import Leaderboard from '@/components/Leaderboard';
 import TournamentReport from '@/components/TournamentReport';
-import { useTournamentData } from '@/hooks/useTournamentData';
-import { Crown, Users, Trophy, FileText, RotateCcw, Printer } from 'lucide-react';
-import { getStatusBadge } from '@/utils/phaseUtils';
-import GameOptionsCard from "@/components/GameOptionsCard";
-import TournamentHeader from "@/components/TournamentHeader";
-import TournamentOverviewCard from "@/components/TournamentOverviewCard";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent } from '@/components/ui/card';
+import { getPhaseTitle, getPhaseIcon } from '@/utils/phaseUtils';
+import TournamentHeader from '@/components/TournamentHeader';
+import { generateMatches } from '@/utils/tournamentLogic';
 
-const Index = () => {
-  const { tournamentData, updateTournament, resetTournament, isLoading } = useTournamentData();
-  const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState('participants');
+const IndexPage = () => {
+  // CORREÇÃO: Alterado de desestruturação de objeto para array
+  const [
+    tournamentData,
+    updateTournament,
+    createTournament,
+    clearTournament,
+    loadTournament,
+  ] = useTournamentData();
 
-  useEffect(() => {
-    document.title = tournamentData?.name || 'Gerenciador de Torneios';
-  }, [tournamentData?.name]);
+  const handleCreateTournament = (data: any) => {
+    let initialStatus = 'registration';
+    let teams = [];
 
-  if (isLoading) {
+    // Para o formato Super 8, os jogadores já são as "equipes"
+    if (data.format === 'super8') {
+      initialStatus = 'teams_defined';
+    }
+    // Para o formato de duplas pré-definidas (não Super 16)
+    else if (data.format === 'doubles_groups') {
+        teams = Array.from({ length: data.size }, (_, i) => ({
+            id: `t_${i}`,
+            name: `Dupla ${i + 1}`,
+            playerIds: [],
+        }));
+        initialStatus = 'teams_defined';
+    }
+
+    createTournament({ ...data, status: initialStatus, teams });
+  };
+
+  const handleStartTournament = useCallback(() => {
+    if (!tournamentData) return;
+    
+    let phase = 'group_stage'; // Padrão para formatos de grupo
+    if (tournamentData.format === 'super8') {
+      phase = 'playing';
+    } else if (tournamentData.format === 'king_of_the_court') {
+      phase = 'phase1_groups';
+    }
+
+    const matches = generateMatches({ ...tournamentData, status: phase });
+    updateTournament({
+      ...tournamentData,
+      status: phase,
+      matches: matches,
+      groups: tournamentData.groups || [],
+    });
+  }, [tournamentData, updateTournament]);
+
+  const CurrentPhaseIcon = useMemo(() => {
+    if (tournamentData?.status) {
+      return getPhaseIcon(tournamentData.status);
+    }
+    return null;
+  }, [tournamentData?.status]);
+
+  if (!tournamentData) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
-          <p className="text-gray-300 text-lg">Carregando torneio...</p>
-        </div>
+      <div className="container mx-auto p-4">
+        <TournamentSetup onCreateTournament={handleCreateTournament} />
       </div>
     );
   }
+  
+  const renderContent = () => {
+    // Fase de Registro ou Definição de Duplas
+    if (['registration', 'teams_defined'].includes(tournamentData.status)) {
+        if(tournamentData.format === 'doubles_groups') {
+            // Se for duplas, podemos ir direto pra tela de jogos para definir os jogadores por dupla
+             return (
+                <Tabs defaultValue="participants" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="participants">Participantes</TabsTrigger>
+                    <TabsTrigger value="settings">Configurações</TabsTrigger>
+                </TabsList>
+                <TabsContent value="participants">
+                    <ParticipantManager
+                        tournamentData={tournamentData}
+                        updateTournament={updateTournament}
+                        onStartTournament={handleStartTournament}
+                    />
+                </TabsContent>
+                <TabsContent value="settings">
+                    <p>Configurações Gerais</p>
+                </TabsContent>
+                </Tabs>
+             )
+        }
+        return (
+            <ParticipantManager
+                tournamentData={tournamentData}
+                updateTournament={updateTournament}
+                onStartTournament={handleStartTournament}
+            />
+        );
+    }
 
-  if (!tournamentData || tournamentData.status === "setup") {
+    // Torneio em andamento
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900">
-        <div className="container mx-auto p-4 max-w-4xl">
-          <div className="text-center mb-8 pt-20">
-            <Trophy className="w-20 h-20 text-blue-400 mx-auto mb-4" />
-            <h1 className="text-5xl font-bold text-white mb-4">
-              Gerenciador de Torneios
-            </h1>
-            <p className="text-xl text-gray-300">
-              Organize competições esportivas com facilidade
-            </p>
-          </div>
-          <TournamentSetup onCreateTournament={updateTournament} />
-        </div>
-      </div>
-    );
-  }
-
-  const handleReset = () => {
-    if (
-      window.confirm(
-        "Tem certeza que deseja criar um novo torneio? Todos os dados atuais serão perdidos."
-      )
-    ) {
-      resetTournament();
-      toast({
-        title: "Torneio resetado",
-        description: "Um novo torneio pode ser criado agora.",
-      });
-    }
-  };
-
-  const getTeamDisplayName = (teamId: any) => {
-    console.log('Index - Processing teamId:', teamId, 'Tournament format:', tournamentData.format);
-    
-    // Enhanced for Super 16 format
-    if (tournamentData.format === 'super16') {
-      if (Array.isArray(teamId)) {
-        console.log('Index - teamId is array:', teamId);
-        const playerNames = teamId.map(playerId => {
-          const player = (tournamentData.players || []).find(p => p.id === playerId);
-          console.log('Index - Found player:', player);
-          return player ? player.name : 'Jogador';
-        });
-        const result = playerNames.join(' / ');
-        console.log('Index - Final team name:', result);
-        return result;
-      }
-      
-      // If it's a string, might be a team ID - check teams first
-      const team = (tournamentData.teams || []).find(t => t.id === teamId);
-      if (team && Array.isArray(team.playerIds)) {
-        console.log('Index - Found team with playerIds:', team);
-        const playerNames = team.playerIds.map(playerId => {
-          const player = (tournamentData.players || []).find(p => p.id === playerId);
-          return player ? player.name : 'Jogador';
-        });
-        return playerNames.join(' / ');
-      }
-      
-      // Last fallback - might be a single player ID
-      const player = (tournamentData.players || []).find(p => p.id === teamId);
-      if (player) {
-        return player.name;
-      }
-      
-      return 'Dupla';
-    }
-    
-    if (Array.isArray(teamId)) {
-      const playerNames = teamId.map(playerId => {
-        const player = (tournamentData.players || []).find(p => p.id === playerId);
-        return player ? player.name : 'Jogador';
-      });
-      return playerNames.join(' / ');
-    }
-    
-    const team = (tournamentData.teams || []).find(t => t.id === teamId);
-    return team ? team.name : 'Time';
-  };
-
-  const getStatusBadgeComponent = () => {
-    const status = getStatusBadge(tournamentData.status);
-    return (
-      <Badge className={`${status.color} text-white`}>
-        {status.label}
-      </Badge>
+      <Tabs defaultValue="games" className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="games">Jogos</TabsTrigger>
+          <TabsTrigger value="leaderboard">Classificação</TabsTrigger>
+          <TabsTrigger value="report">Relatório</TabsTrigger>
+          <TabsTrigger value="settings">Configurações</TabsTrigger>
+        </TabsList>
+        <TabsContent value="games">
+          <MatchManager 
+            tournamentData={tournamentData}
+            updateTournament={updateTournament}
+          />
+        </TabsContent>
+        <TabsContent value="leaderboard">
+          <Leaderboard tournamentData={tournamentData} />
+        </TabsContent>
+        <TabsContent value="report">
+            <TournamentReport tournamentData={tournamentData}/>
+        </TabsContent>
+        <TabsContent value="settings">
+          <p>Configurações Gerais</p>
+        </TabsContent>
+      </Tabs>
     );
   };
-
-  const handlePrintMatches = () => {
-    window.print();
-  };
-
-  const handlePrintMatchesBackup = () => {
-    // Lógica placeholder (caso precise customizar)
-  };
-
-  // Antes do return, tornamos available os dados para GameOptionsCard backup (global var simplificada)
-  // Isso é uma forma prática para compartilhar dados entre componentes sem state lift (pode refatorar depois)
-  (window as any).tournamentDataForBackup = tournamentData || {};
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
-      <div className="container mx-auto p-4 max-w-7xl">
-        {/* Header */}
-        <TournamentHeader
-          name={tournamentData.name}
-          format={tournamentData.format}
-          status={tournamentData.status}
-          onReset={handleReset}
-        />
-
-        {/* Main Content */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 bg-gray-800 mb-6">
-            <TabsTrigger value="participants" className="flex items-center gap-2">
-              <Users className="w-4 h-4" />
-              <span className="hidden sm:inline">Participantes</span>
-            </TabsTrigger>
-            <TabsTrigger value="matches" className="flex items-center gap-2">
-              <Trophy className="w-4 h-4" />
-              <span className="hidden sm:inline">Jogos</span>
-            </TabsTrigger>
-            <TabsTrigger value="leaderboard" className="flex items-center gap-2">
-              <Crown className="w-4 h-4" />
-              <span className="hidden sm:inline">Classificação</span>
-            </TabsTrigger>
-            <TabsTrigger value="report" className="flex items-center gap-2">
-              <FileText className="w-4 h-4" />
-              <span className="hidden sm:inline">Relatório</span>
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="participants">
-            <ParticipantManager 
-              tournamentData={tournamentData} 
-              onUpdate={updateTournament}
+    <div className="container mx-auto p-4">
+      <Card className="bg-gray-800/50 border-gray-700 text-white mb-4">
+        <CardContent className="p-4">
+          <TournamentHeader
+              tournamentData={tournamentData}
+              onLoadTournament={loadTournament}
+              onClearTournament={clearTournament}
             />
-          </TabsContent>
-
-          <TabsContent value="matches">
-            <div className="space-y-6">
-              {/* Mostrar GameOptionsCard SEMPRE, inclusive quando FINALIZADO */}
-              <GameOptionsCard
-                matches={tournamentData.matches}
-                tournamentName={tournamentData.name}
-                getTeamDisplayName={getTeamDisplayName}
-                handlePrintMatches={handlePrintMatches}
-                handlePrintMatchesBackup={handlePrintMatchesBackup}
-              />
-              {/* Manter restante da aba jogos */}
-              <MatchManager 
-                tournamentData={tournamentData} 
-                onUpdate={updateTournament}
-              />
-            </div>
-          </TabsContent>
-
-          <TabsContent value="leaderboard">
-            <div className="space-y-6">
-              <TournamentOverviewCard tournamentData={tournamentData} />
-              <Leaderboard tournamentData={tournamentData} />
-            </div>
-          </TabsContent>
-
-          <TabsContent value="report">
-            <TournamentReport tournamentData={tournamentData} />
-          </TabsContent>
-        </Tabs>
-      </div>
+        </CardContent>
+      </Card>
+      {renderContent()}
     </div>
   );
 };
 
-export default Index;
+export default IndexPage;
