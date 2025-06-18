@@ -52,11 +52,13 @@ const TournamentSetup = ({ onCreateTournament }: TournamentSetupProps) => {
 
   const handleFormatSelect = (formatId: string) => {
     setSelectedFormat(formatId);
-    setTournamentSize('');
+    setTournamentSize(''); // Reseta o tamanho ao trocar de formato
     
-    if (formatId === 'super8' || formatId === 'king_of_the_court') {
-      setTournamentSize('16'); // Ajuste para king_of_the_court, se necessário
-      if(formatId === 'super8') setTournamentSize('8');
+    if (formatId === 'super8') {
+      setTournamentSize('8');
+    }
+    if (formatId === 'king_of_the_court') {
+      setTournamentSize('16');
     }
   };
 
@@ -68,12 +70,24 @@ const TournamentSetup = ({ onCreateTournament }: TournamentSetupProps) => {
       format: selectedFormat,
       size: parseInt(tournamentSize),
       status: 'registration',
+      // Essas linhas são essenciais e faltavam no código "novo"
+      players: [],
+      teams: [],
+      matches: [],
+      groups: [],
+      createdAt: new Date().toISOString()
     };
 
     onCreateTournament(tournamentData);
   };
 
-  const isValid = selectedFormat && tournamentName.trim() && !!tournamentSize;
+  // Esta validação é mais robusta e correta
+  const isValid = selectedFormat && tournamentName.trim() &&
+    (
+      selectedFormat === 'doubles_groups' ?
+        (parseInt(tournamentSize, 10) >= 2 && parseInt(tournamentSize, 10) <= 32) :
+        !!tournamentSize
+    );
 
   return (
     <Card className="bg-gray-800 border-gray-700 p-8 max-w-4xl mx-auto">
@@ -95,22 +109,43 @@ const TournamentSetup = ({ onCreateTournament }: TournamentSetupProps) => {
       <div className="mb-8">
         <h3 className="text-xl font-semibold text-white mb-4">2. Escolha o Formato</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {formats.map((format) => (
-            <button
-              key={format.id}
-              onClick={() => handleFormatSelect(format.id)}
-              className={`relative p-6 rounded-lg border-2 transition-all duration-200 text-left ${selectedFormat === format.id ? 'border-blue-500 bg-gradient-to-r ' + format.color + ' text-white shadow-lg scale-105' : 'border-gray-600 bg-gray-700 hover:border-gray-500 text-gray-300'}`}
-            >
-              {/* ... conteúdo do botão ... */}
-            </button>
-          ))}
+          {formats.map((format) => {
+            const Icon = format.icon;
+            const isSelected = selectedFormat === format.id;
+            
+            return (
+              <button
+                key={format.id}
+                onClick={() => handleFormatSelect(format.id)}
+                className={`relative p-6 rounded-lg border-2 transition-all duration-200 text-left ${isSelected ? 'border-blue-500 bg-gradient-to-r ' + format.color + ' text-white shadow-lg scale-105' : 'border-gray-600 bg-gray-700 hover:border-gray-500 text-gray-300'}`}
+              >
+                <div className="flex items-start gap-4">
+                  <Icon className={`w-8 h-8 ${isSelected ? 'text-white' : 'text-gray-400'}`} />
+                  <div className="flex-1">
+                    <h4 className="text-lg font-bold mb-1">{format.name}</h4>
+                    <p className={`text-sm mb-2 ${isSelected ? 'text-white/80' : 'text-gray-400'}`}>{format.description}</p>
+                    <p className={`text-xs ${isSelected ? 'text-white/70' : 'text-gray-500'}`}>{format.details}</p>
+                  </div>
+                </div>
+                {isSelected && (
+                  <div className="absolute top-2 right-2">
+                    <Badge className="bg-white text-gray-900">Selecionado</Badge>
+                  </div>
+                )}
+              </button>
+            );
+          })}
         </div>
       </div>
 
       {selectedFormat && (
         <div className="mb-8">
           <h3 className="text-xl font-semibold text-white mb-4">3. Número de Participantes</h3>
-          {selectedFormat === 'super16' ? (
+          {selectedFormat === 'super8' || selectedFormat === 'king_of_the_court' ? (
+            <div className="bg-gray-600 border border-gray-500 rounded-md px-4 py-3 text-gray-300 text-lg">
+              {tournamentSize} jogadores (fixo)
+            </div>
+          ) : selectedFormat === 'super16' ? (
             <Select value={tournamentSize} onValueChange={setTournamentSize}>
               <SelectTrigger className="bg-gray-700 border-gray-600 text-white text-lg p-4">
                 <SelectValue placeholder="Selecione o número de jogadores" />
@@ -120,17 +155,26 @@ const TournamentSetup = ({ onCreateTournament }: TournamentSetupProps) => {
                 <SelectItem value="32">32 jogadores (16 duplas)</SelectItem>
               </SelectContent>
             </Select>
-          ) : (
-            <Input
-              type="number"
-              value={tournamentSize}
-              onChange={e => setTournamentSize(e.target.value)}
-              placeholder="Nº de jogadores ou duplas"
-              className="bg-gray-700 border-gray-600 text-white text-lg p-4"
-              // Para formatos com tamanho fixo, poderia ser readOnly
-              readOnly={selectedFormat === 'super8' || selectedFormat === 'king_of_the_court'}
-            />
-          )}
+          ) : selectedFormat === 'doubles_groups' ? (
+            <div>
+              <Input
+                type="number"
+                min={2}
+                max={32}
+                value={tournamentSize}
+                onChange={e => {
+                  const val = e.target.value;
+                  if (parseInt(val, 10) > 32) setTournamentSize("32");
+                  else setTournamentSize(val.replace(/^0+/, ''));
+                }}
+                placeholder="Informe o número de duplas (min: 2, max: 32)"
+                className="bg-gray-700 border-gray-600 text-white text-lg p-4"
+              />
+              <div className="text-xs text-gray-400 mt-1">
+                Escolha quantas duplas deseja para o torneio (mínimo 2, máximo 32).
+              </div>
+            </div>
+          ) : null}
         </div>
       )}
 

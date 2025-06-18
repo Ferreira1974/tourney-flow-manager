@@ -20,8 +20,23 @@ const IndexPage = () => {
     loadTournament,
   } = useTournamentData();
 
+  // LÓGICA RESTAURADA: Prepara o estado inicial do torneio corretamente
   const handleCreateTournament = (data: any) => {
-    createTournament(data);
+    let initialStatus = 'registration';
+    let teams = [];
+
+    if (data.format === 'super8') {
+      initialStatus = 'teams_defined';
+    } else if (data.format === 'doubles_groups') {
+        teams = Array.from({ length: data.size }, (_, i) => ({
+            id: `t_${i}`,
+            name: `Dupla ${i + 1}`,
+            playerIds: [],
+        }));
+        initialStatus = 'teams_defined';
+    }
+
+    createTournament({ ...data, status: initialStatus, teams });
   };
 
   const handleStartTournament = useCallback(() => {
@@ -42,6 +57,14 @@ const IndexPage = () => {
       matches: matches,
     });
   }, [tournamentData, updateTournament]);
+
+  // LÓGICA RESTAURADA: useMemo para o ícone da fase
+  const CurrentPhaseIcon = useMemo(() => {
+    if (tournamentData?.status) {
+      return getPhaseIcon(tournamentData.status);
+    }
+    return null;
+  }, [tournamentData?.status]);
 
   if (!tournamentData) {
     return (
@@ -68,6 +91,7 @@ const IndexPage = () => {
           <TabsTrigger value="games">Jogos</TabsTrigger>
           <TabsTrigger value="leaderboard">Classificação</TabsTrigger>
           <TabsTrigger value="report">Relatório</TabsTrigger>
+          <TabsTrigger value="settings">Configurações</TabsTrigger>
         </TabsList>
         <TabsContent value="games">
           <MatchManager 
@@ -80,6 +104,9 @@ const IndexPage = () => {
         </TabsContent>
         <TabsContent value="report">
             <TournamentReport tournamentData={tournamentData}/>
+        </TabsContent>
+        <TabsContent value="settings">
+          <p>Configurações Gerais</p>
         </TabsContent>
       </Tabs>
     );
