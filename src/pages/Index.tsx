@@ -12,7 +12,6 @@ import TournamentHeader from '@/components/TournamentHeader';
 import { generateMatches } from '@/utils/tournamentLogic';
 
 const IndexPage = () => {
-  // CORREÇÃO: Voltando a usar desestruturação de OBJETO para corresponder ao hook
   const {
     tournamentData,
     updateTournament,
@@ -22,22 +21,7 @@ const IndexPage = () => {
   } = useTournamentData();
 
   const handleCreateTournament = (data: any) => {
-    let initialStatus = 'registration';
-    let teams = [];
-
-    if (data.format === 'super8') {
-      initialStatus = 'teams_defined';
-    }
-    else if (data.format === 'doubles_groups') {
-        teams = Array.from({ length: data.size }, (_, i) => ({
-            id: `t_${i}`,
-            name: `Dupla ${i + 1}`,
-            playerIds: [],
-        }));
-        initialStatus = 'teams_defined';
-    }
-
-    createTournament({ ...data, status: initialStatus, teams });
+    createTournament(data);
   };
 
   const handleStartTournament = useCallback(() => {
@@ -50,21 +34,14 @@ const IndexPage = () => {
       phase = 'phase1_groups';
     }
 
-    const matches = generateMatches({ ...tournamentData, status: phase });
+    const updatedTournamentData = { ...tournamentData, status: phase };
+    const matches = generateMatches(updatedTournamentData);
+    
     updateTournament({
-      ...tournamentData,
-      status: phase,
+      ...updatedTournamentData,
       matches: matches,
-      groups: tournamentData.groups || [],
     });
   }, [tournamentData, updateTournament]);
-
-  const CurrentPhaseIcon = useMemo(() => {
-    if (tournamentData?.status) {
-      return getPhaseIcon(tournamentData.status);
-    }
-    return null;
-  }, [tournamentData?.status]);
 
   if (!tournamentData) {
     return (
@@ -91,7 +68,6 @@ const IndexPage = () => {
           <TabsTrigger value="games">Jogos</TabsTrigger>
           <TabsTrigger value="leaderboard">Classificação</TabsTrigger>
           <TabsTrigger value="report">Relatório</TabsTrigger>
-          <TabsTrigger value="settings">Configurações</TabsTrigger>
         </TabsList>
         <TabsContent value="games">
           <MatchManager 
@@ -104,9 +80,6 @@ const IndexPage = () => {
         </TabsContent>
         <TabsContent value="report">
             <TournamentReport tournamentData={tournamentData}/>
-        </TabsContent>
-        <TabsContent value="settings">
-          <p>Configurações Gerais</p>
         </TabsContent>
       </Tabs>
     );
