@@ -1,272 +1,230 @@
-
-import React, { useState } from 'react';
-import { Card } from '@/components/ui/card';
+import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { UserPlus, Trash2, Edit, Shuffle, Check, ShieldCheck } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Users, UserPlus, Trash2, Play, Users2 } from 'lucide-react';
-import DoublesGroupsFormation from './DoublesGroupsFormation';
+import { shuffleArray } from '@/utils/tournamentLogic';
 
 interface ParticipantManagerProps {
   tournamentData: any;
-  onUpdate: (data: any) => void;
+  updateTournament: (data: any) => void;
+  onStartTournament: () => void;
 }
 
-const ParticipantManager = ({ tournamentData, onUpdate }: ParticipantManagerProps) => {
-  const { toast } = useToast();
+const ParticipantManager = ({ tournamentData, updateTournament, onStartTournament }: ParticipantManagerProps) => {
   const [newPlayerName, setNewPlayerName] = useState('');
+  const [seededPlayerIds, setSeededPlayerIds] = useState<string[]>([]);
+  const [editingPlayer, setEditingPlayer] = useState<any>(null);
+  const [editedName, setEditedName] = useState('');
+  const { toast } = useToast();
 
-  const addPlayer = () => {
-    if (!newPlayerName.trim()) {
-      toast({
-        title: "Nome obrigatório",
-        description: "Por favor, insira o nome do participante.",
-        variant: "destructive",
-      });
-      return;
-    }
+  const players = useMemo(() => tournamentData.players || [], [tournamentData.players]);
+  const teams = useMemo(() => tournamentData.teams || [], [tournamentData.teams]);
+  const isSuper16 = tournamentData.format === 'super16';
+  const playerLimit = tournamentData.size;
+  const isPlayerLimitReached = players.length >= playerLimit;
 
-    const newPlayer = {
-      id: `player_${Date.now()}`,
-      name: newPlayerName.trim(),
-      gamesPlayed: 0,
-      wins: 0,
-      pointsFor: 0,
-      pointsAgainst: 0,
-    };
-
-    const updatedData = {
-      ...tournamentData,
-      players: [...(tournamentData.players || []), newPlayer],
-    };
-
-    // For Super 16 format, automatically create teams when we have pairs
-    if (tournamentData.format === 'super16') {
-      const totalPlayers = updatedData.players.length;
-      if (totalPlayers % 2 === 0 && totalPlayers >= 2) {
-        // Create teams from pairs of players
-        const teams = [];
-        for (let i = 0; i < totalPlayers; i += 2) {
-          if (i + 1 < totalPlayers) {
-            teams.push({
-              id: `team_${Date.now()}_${i}`,
-              name: `${updatedData.players[i].name} / ${updatedData.players[i + 1].name}`,
-              playerIds: [updatedData.players[i].id, updatedData.players[i + 1].id],
-              gamesPlayed: 0,
-              wins: 0,
-              pointsFor: 0,
-              pointsAgainst: 0,
-            });
-          }
-        }
-        updatedData.teams = teams;
-      }
-    }
-
-    onUpdate(updatedData);
-    setNewPlayerName('');
-    
-    toast({
-      title: "Participante adicionado",
-      description: `${newPlayerName} foi adicionado ao torneio.`,
-    });
-  };
-
-  const removePlayer = (playerId: string) => {
-    const player = tournamentData.players?.find((p: any) => p.id === playerId);
-    
-    if (window.confirm(`Tem certeza que deseja remover ${player?.name}?`)) {
-      const updatedData = {
-        ...tournamentData,
-        players: tournamentData.players?.filter((p: any) => p.id !== playerId) || [],
+  const handleAddPlayer = () => {
+    if (newPlayerName.trim() && !isPlayerLimitReached) {
+      const newPlayer = {
+        id: `p_${new Date().getTime()}`,
+        name: newPlayerName.trim(),
       };
-
-      // For Super 16 format, rebuild teams after removing a player
-      if (tournamentData.format === 'super16') {
-        const totalPlayers = updatedData.players.length;
-        const teams = [];
-        for (let i = 0; i < totalPlayers; i += 2) {
-          if (i + 1 < totalPlayers) {
-            teams.push({
-              id: `team_${Date.now()}_${i}`,
-              name: `${updatedData.players[i].name} / ${updatedData.players[i + 1].name}`,
-              playerIds: [updatedData.players[i].id, updatedData.players[i + 1].id],
-              gamesPlayed: 0,
-              wins: 0,
-              pointsFor: 0,
-              pointsAgainst: 0,
-            });
-          }
-        }
-        updatedData.teams = teams;
-      }
-
-      onUpdate(updatedData);
-      
-      toast({
-        title: "Participante removido",
-        description: `${player?.name} foi removido do torneio.`,
+      updateTournament({
+        ...tournamentData,
+        players: [...players, newPlayer],
       });
+      setNewPlayerName('');
     }
   };
 
-  const canStartTournament = () => {
-    const playerCount = tournamentData.players?.length || 0;
-    
-    switch (tournamentData.format) {
-      case 'super8':
-        return playerCount === 8;
-      case 'super16':
-        return playerCount === 24 || playerCount === 32; // 24 ou 32 jogadores (12 ou 16 duplas)
-      case 'doubles_groups':
-        return playerCount >= 8 && playerCount % 2 === 0;
-      case 'king_of_the_court':
-        return playerCount === 16;
-      default:
-        return false;
-    }
+  const handleRemovePlayer = (playerId: string) => {
+    updateTournament({
+      ...tournamentData,
+      players: players.filter((p: any) => p.id !== playerId),
+    });
+    // Remove from seeds if they are deleted
+    setSeededPlayerIds(prev => prev.filter(id => id !== playerId));
+  };
+  
+  const handleEditPlayer = () => {
+    if(!editingPlayer || !editedName.trim()) return;
+
+    updateTournament({
+        ...tournamentData,
+        players: players.map((p: any) => p.id === editingPlayer.id ? { ...p, name: editedName.trim() } : p)
+    });
+    setEditingPlayer(null);
+    setEditedName('');
+  }
+
+  const handleSeedToggle = (playerId: string) => {
+    setSeededPlayerIds(prev =>
+      prev.includes(playerId)
+        ? prev.filter(id => id !== playerId)
+        : [...prev, playerId]
+    );
   };
 
-  const getRequiredPlayers = () => {
-    switch (tournamentData.format) {
-      case 'super8':
-        return 'Exatamente 8 jogadores';
-      case 'super16':
-        return '24 jogadores (3 grupos) ou 32 jogadores (4 grupos)';
-      case 'doubles_groups':
-        return 'Mínimo 8 jogadores (número par)';
-      case 'king_of_the_court':
-        return 'Exatamente 16 jogadores';
-      default:
-        return 'Número variável';
-    }
-  };
+  const handleDrawTeams = () => {
+    if (!isSuper16 || !isPlayerLimitReached) return;
 
-  const startTournament = () => {
-    if (!canStartTournament()) {
+    const seeds = players.filter((p: any) => seededPlayerIds.includes(p.id));
+    const nonSeeds = players.filter((p: any) => !seededPlayerIds.includes(p.id));
+
+    if (seeds.length > players.length / 2) {
       toast({
-        title: "Não é possível iniciar",
-        description: `Este formato requer: ${getRequiredPlayers()}`,
+        title: "Erro no Sorteio",
+        description: `Não é possível ter mais que ${players.length / 2} cabeças de chave.`,
         variant: "destructive",
       });
       return;
     }
-
-    const updatedData = {
-      ...tournamentData,
-      status: tournamentData.format === 'doubles_groups' || tournamentData.format === 'super16' ? 'group_stage' : 'playing',
-    };
-
-    onUpdate(updatedData);
     
+    const shuffledSeeds = shuffleArray(seeds);
+    const shuffledNonSeeds = shuffleArray(nonSeeds);
+    
+    const newTeams: any[] = [];
+    let teamIdCounter = 0;
+
+    // 1. Pair each seed with a non-seed
+    shuffledSeeds.forEach((seed: any) => {
+        const partner = shuffledNonSeeds.pop(); // Take one from the end
+        if (partner) {
+            newTeams.push({
+                id: `t_${teamIdCounter++}`,
+                playerIds: [seed.id, partner.id]
+            });
+        }
+    });
+
+    // 2. Pair remaining non-seeds together
+    while (shuffledNonSeeds.length > 0) {
+        const player1 = shuffledNonSeeds.pop();
+        const player2 = shuffledNonSeeds.pop();
+        if (player1 && player2) {
+            newTeams.push({
+                id: `t_${teamIdCounter++}`,
+                playerIds: [player1.id, player2.id]
+            });
+        }
+    }
+
+    updateTournament({
+      ...tournamentData,
+      teams: newTeams,
+      status: 'teams_defined', // A new status to show teams before starting
+    });
+
     toast({
-      title: "Torneio iniciado!",
-      description: "Os jogos foram gerados. Vá para a aba Jogos para gerenciar as partidas.",
+        title: "Duplas Sorteadas!",
+        description: `${newTeams.length} duplas foram formadas com sucesso.`,
     });
   };
 
-  const playerCount = tournamentData.players?.length || 0;
-
+  // UI rendering
   return (
-    <div className="space-y-6">
-      <Card className="bg-gray-800 border-gray-700 p-6">
-        <div className="flex items-center gap-2 mb-6">
-          <Users className="w-6 h-6 text-blue-400" />
-          <h2 className="text-2xl font-bold text-white">Gerenciar Participantes</h2>
-          <Badge className="bg-blue-600 text-white">
-            {getRequiredPlayers()}
-          </Badge>
-        </div>
-
-        {/* Add Player Form */}
-        <div className="flex gap-4 mb-6">
+    <Card className="bg-gray-800 border-gray-700 text-white">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <UserPlus />
+          Cadastro de Participantes ({players.length} / {playerLimit})
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {/* Formulário de Adição */}
+        <div className="flex gap-2 mb-4">
           <Input
-            placeholder="Nome do participante"
             value={newPlayerName}
             onChange={(e) => setNewPlayerName(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && addPlayer()}
-            className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
+            onKeyPress={(e) => e.key === 'Enter' && handleAddPlayer()}
+            placeholder="Nome do participante"
+            className="bg-gray-700 border-gray-600 text-white"
+            disabled={isPlayerLimitReached}
           />
-          <Button onClick={addPlayer} className="bg-blue-600 hover:bg-blue-700">
-            <UserPlus className="w-4 h-4 mr-2" />
-            Adicionar
+          <Button onClick={handleAddPlayer} disabled={isPlayerLimitReached || !newPlayerName.trim()}>
+            <Check className="mr-2 h-4 w-4"/> Adicionar
           </Button>
         </div>
+        {isPlayerLimitReached && (
+            <p className="text-sm text-yellow-400 mb-4 text-center">
+                Limite de {playerLimit} participantes atingido.
+            </p>
+        )}
 
-        {/* Players List */}
-        <div className="space-y-3 mb-6">
-          {tournamentData.players?.map((player: any, index: number) => (
-            <div
-              key={player.id}
-              className="flex items-center justify-between bg-gray-700 p-4 rounded-lg"
-            >
-              <div className="flex items-center gap-4">
-                <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold">
-                  {index + 1}
-                </div>
-                <span className="text-white font-medium">{player.name}</span>
+        {/* Lista de Jogadores */}
+        <div className="space-y-2 max-h-96 overflow-y-auto pr-2">
+          {players.map((player: any, index: number) => (
+            <div key={player.id} className="flex items-center justify-between bg-gray-700 p-3 rounded-md">
+              <div className="flex items-center gap-3">
+                <span className="font-mono text-sm text-gray-400">{index + 1}.</span>
+                {isSuper16 && (
+                    <div className="flex items-center">
+                        <Checkbox
+                            id={`seed-${player.id}`}
+                            checked={seededPlayerIds.includes(player.id)}
+                            onCheckedChange={() => handleSeedToggle(player.id)}
+                        />
+                        <Label htmlFor={`seed-${player.id}`} className="ml-2 flex items-center gap-1 cursor-pointer">
+                            <ShieldCheck className={`h-4 w-4 ${seededPlayerIds.includes(player.id) ? 'text-yellow-400' : 'text-gray-500'}`}/>
+                        </Label>
+                    </div>
+                )}
+                <span className="font-medium">{player.name}</span>
               </div>
-              
-              <Button
-                onClick={() => removePlayer(player.id)}
-                variant="destructive"
-                size="sm"
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
+              <div className="flex items-center gap-2">
+                <Dialog>
+                    <DialogTrigger asChild>
+                        <Button variant="ghost" size="icon" onClick={() => { setEditingPlayer(player); setEditedName(player.name); }}>
+                            <Edit className="h-4 w-4 text-blue-400" />
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent className="bg-gray-800 border-gray-700 text-white">
+                        <DialogHeader>
+                            <DialogTitle>Editar Participante</DialogTitle>
+                        </DialogHeader>
+                        <Input 
+                            value={editedName}
+                            onChange={e => setEditedName(e.target.value)}
+                            className="bg-gray-700 border-gray-600 text-white"
+                        />
+                        <DialogFooter>
+                            <DialogClose asChild>
+                                <Button type="button" onClick={handleEditPlayer}>Salvar Alterações</Button>
+                            </DialogClose>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+                
+                <Button variant="ghost" size="icon" onClick={() => handleRemovePlayer(player.id)}>
+                  <Trash2 className="h-4 w-4 text-red-500" />
+                </Button>
+              </div>
             </div>
           ))}
-          
-          {playerCount === 0 && (
-            <div className="text-center py-8 text-gray-400">
-              <Users className="w-16 h-16 mx-auto mb-4 opacity-50" />
-              <p>Nenhum participante adicionado ainda.</p>
-              <p className="text-sm mt-2">Adicione participantes para começar o torneio.</p>
-            </div>
-          )}
         </div>
+        
+        {/* Botão de Sorteio ou Iniciar */}
+        <div className="mt-6 text-center">
+            {isSuper16 && teams.length === 0 && (
+                <Button onClick={handleDrawTeams} disabled={!isPlayerLimitReached} size="lg">
+                    <Shuffle className="mr-2 h-5 w-5" />
+                    Sortear Duplas
+                </Button>
+            )}
 
-        {/* Start Tournament Button */}
-        <div className="flex justify-center">
-          <Button
-            onClick={startTournament}
-            disabled={!canStartTournament()}
-            className="bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed px-8 py-3 text-lg"
-          >
-            <Play className="w-5 h-5 mr-2" />
-            Iniciar Torneio
-          </Button>
+            {(isSuper16 ? teams.length > 0 : isPlayerLimitReached) && (
+                 <Button onClick={onStartTournament} size="lg" className="bg-green-600 hover:bg-green-700">
+                    Iniciar Torneio
+                </Button>
+            )}
         </div>
-
-        {!canStartTournament() && playerCount > 0 && (
-          <p className="text-center text-gray-400 mt-4">
-            {playerCount < 8 && tournamentData.format === 'doubles_groups' && 
-              `Adicione mais ${8 - playerCount} participante(s) para atingir o mínimo.`}
-            {playerCount < 8 && tournamentData.format === 'super8' && 
-              `Adicione mais ${8 - playerCount} participante(s).`}
-            {playerCount !== 24 && playerCount !== 32 && tournamentData.format === 'super16' && 
-              `Adicione participantes para atingir 24 (3 grupos) ou 32 jogadores (4 grupos).`}
-            {playerCount < 16 && tournamentData.format === 'king_of_the_court' && 
-              `Adicione mais ${16 - playerCount} participante(s).`}
-            {tournamentData.format === 'doubles_groups' && playerCount >= 8 && playerCount % 2 !== 0 && 
-              'Adicione mais 1 participante para ter um número par.'}
-          </p>
-        )}
-      </Card>
-
-      {/* Show teams formation for doubles formats */}
-      {(['doubles_groups', 'super16'].includes(tournamentData.format)) && 
-       tournamentData.teams && tournamentData.teams.length > 0 && (
-        <Card className="bg-gray-800 border-gray-700 p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Users2 className="w-6 h-6 text-green-400" />
-            <h3 className="text-xl font-bold text-white">Duplas Formadas</h3>
-          </div>
-          <DoublesGroupsFormation tournamentData={tournamentData} />
-        </Card>
-      )}
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 
