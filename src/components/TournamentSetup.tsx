@@ -38,7 +38,7 @@ const TournamentSetup = ({ onCreateTournament }: TournamentSetupProps) => {
       name: 'Super 16',
       description: 'Duplas Sorteadas',
       icon: Trophy,
-      details: '16 jogadores sorteados em 8 duplas para competição',
+      details: '24 ou 32 jogadores sorteados em duplas para competição',
       color: 'from-yellow-500 to-orange-500'
     },
     {
@@ -51,16 +51,18 @@ const TournamentSetup = ({ onCreateTournament }: TournamentSetupProps) => {
     }
   ];
 
-  // NOVA FUNÇÃO: Retorna as opções de tamanho apenas para os formatos que não são de duplas customizadas
+  // Função corrigida para retornar as opções de tamanho corretas para cada formato
   const getSizeOptions = (format: string) => {
     switch (format) {
       case 'super8':
         return [{ value: '8', label: '8 jogadores' }];
       case 'super16':
-        return [{ value: '16', label: '16 jogadores' }];
+        return [
+          { value: '24', label: '24 jogadores (12 duplas - 3 grupos)' },
+          { value: '32', label: '32 jogadores (16 duplas - 4 grupos)' }
+        ];
       case 'king_of_the_court':
         return [{ value: '16', label: '16 jogadores' }];
-      // Para 'doubles_groups', agora campo livre!
       default:
         return [];
     }
@@ -69,11 +71,11 @@ const TournamentSetup = ({ onCreateTournament }: TournamentSetupProps) => {
   const handleFormatSelect = (formatId: string) => {
     setSelectedFormat(formatId);
     setTournamentSize('');
-    // Para os demais, já preenche o valor fixo
+    // Para Super 8 e King of Court, preenche valor fixo
     if (formatId === 'super8') {
       setTournamentSize('8');
     }
-    if (formatId === 'super16' || formatId === 'king_of_the_court') {
+    if (formatId === 'king_of_the_court') {
       setTournamentSize('16');
     }
   };
@@ -87,7 +89,7 @@ const TournamentSetup = ({ onCreateTournament }: TournamentSetupProps) => {
       size = size || sizeOptions[0]?.value;
     }
 
-    // no formato "Torneio Duplas" exigir pelo menos 2 duplas
+    // Para formato "Torneio Duplas" exigir pelo menos 2 duplas
     if (selectedFormat === 'doubles_groups') {
       const parsed = parseInt(size, 10);
       if (isNaN(parsed) || parsed < 2 || parsed > 32) {
@@ -186,10 +188,23 @@ const TournamentSetup = ({ onCreateTournament }: TournamentSetupProps) => {
             <div className="bg-gray-600 border border-gray-500 rounded-md px-4 py-3 text-gray-300 text-lg">
               8 jogadores (fixo)
             </div>
-          ) : selectedFormat === 'super16' || selectedFormat === 'king_of_the_court' ? (
+          ) : selectedFormat === 'king_of_the_court' ? (
             <div className="bg-gray-600 border border-gray-500 rounded-md px-4 py-3 text-gray-300 text-lg">
               16 jogadores (fixo)
             </div>
+          ) : selectedFormat === 'super16' ? (
+            <Select value={tournamentSize} onValueChange={setTournamentSize}>
+              <SelectTrigger className="bg-gray-700 border-gray-600 text-white text-lg p-4">
+                <SelectValue placeholder="Selecione o número de jogadores" />
+              </SelectTrigger>
+              <SelectContent className="bg-gray-700 border-gray-600">
+                {getSizeOptions('super16').map((option) => (
+                  <SelectItem key={option.value} value={option.value} className="text-white hover:bg-gray-600">
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           ) : selectedFormat === 'doubles_groups' ? (
             <div>
               <Input
