@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -22,7 +21,7 @@ const TournamentSetup = ({ onCreateTournament }: TournamentSetupProps) => {
       name: 'Super 8',
       description: 'Individual Rotativo',
       icon: Crown,
-      details: '8 jogadores, todos jogam contra todos em duplas rotativas',
+      details: '8 jogadores, todos jogam contra todos em duplas rotativas.',
       color: 'from-purple-500 to-blue-500'
     },
     {
@@ -30,15 +29,15 @@ const TournamentSetup = ({ onCreateTournament }: TournamentSetupProps) => {
       name: 'Torneio Duplas',
       description: 'Grupos + Mata-Mata',
       icon: Users,
-      details: 'Duplas fixas, fase de grupos seguida de eliminatórias',
+      details: 'Duplas fixas, fase de grupos seguida de eliminatórias.',
       color: 'from-green-500 to-teal-500'
     },
     {
       id: 'super16',
       name: 'Super 16',
-      description: 'Duplas Sorteadas',
+      description: 'Fase de Grupos + Mata-Mata',
       icon: Trophy,
-      details: '16 jogadores sorteados em 8 duplas para competição',
+      details: '12 ou 16 duplas. Grupos de 4, 2 classificam por grupo.',
       color: 'from-yellow-500 to-orange-500'
     },
     {
@@ -46,21 +45,22 @@ const TournamentSetup = ({ onCreateTournament }: TournamentSetupProps) => {
       name: 'Rei da Quadra',
       description: '3 Fases',
       icon: Zap,
-      details: 'Grupos, playoffs e final - formato eliminatório progressivo',
+      details: 'Grupos, playoffs e final - formato eliminatório progressivo.',
       color: 'from-red-500 to-pink-500'
     }
   ];
 
-  // NOVA FUNÇÃO: Retorna as opções de tamanho apenas para os formatos que não são de duplas customizadas
   const getSizeOptions = (format: string) => {
     switch (format) {
       case 'super8':
         return [{ value: '8', label: '8 jogadores' }];
       case 'super16':
-        return [{ value: '16', label: '16 jogadores' }];
+        return [
+            { value: '24', label: '24 jogadores (12 duplas)' },
+            { value: '32', label: '32 jogadores (16 duplas)' }
+        ];
       case 'king_of_the_court':
         return [{ value: '16', label: '16 jogadores' }];
-      // Para 'doubles_groups', agora campo livre!
       default:
         return [];
     }
@@ -68,12 +68,12 @@ const TournamentSetup = ({ onCreateTournament }: TournamentSetupProps) => {
 
   const handleFormatSelect = (formatId: string) => {
     setSelectedFormat(formatId);
-    setTournamentSize('');
-    // Para os demais, já preenche o valor fixo
+    setTournamentSize(''); // Reseta o tamanho ao trocar de formato
+    
     if (formatId === 'super8') {
       setTournamentSize('8');
     }
-    if (formatId === 'super16' || formatId === 'king_of_the_court') {
+    if (formatId === 'king_of_the_court') {
       setTournamentSize('16');
     }
   };
@@ -82,23 +82,19 @@ const TournamentSetup = ({ onCreateTournament }: TournamentSetupProps) => {
     if (!selectedFormat || !tournamentName.trim()) return;
 
     let size = tournamentSize;
-    if (selectedFormat !== 'doubles_groups') {
-      const sizeOptions = getSizeOptions(selectedFormat);
-      size = size || sizeOptions[0]?.value;
-    }
-
-    // no formato "Torneio Duplas" exigir pelo menos 2 duplas
     if (selectedFormat === 'doubles_groups') {
       const parsed = parseInt(size, 10);
       if (isNaN(parsed) || parsed < 2 || parsed > 32) {
-        return;
+        return; // Validação para duplas customizadas
       }
+    } else {
+        if (!size) return; // Validação para outros formatos
     }
 
     const tournamentData = {
       name: tournamentName.trim(),
       format: selectedFormat,
-      size: parseInt(size),
+      size: parseInt(size), // Armazena o número total de JOGADORES
       status: 'registration',
       players: [],
       teams: [],
@@ -112,9 +108,9 @@ const TournamentSetup = ({ onCreateTournament }: TournamentSetupProps) => {
 
   const isValid = selectedFormat && tournamentName.trim() &&
     (
-      selectedFormat !== 'doubles_groups' ?
-        tournamentSize :
-        (parseInt(tournamentSize, 10) >= 2 && parseInt(tournamentSize, 10) <= 32)
+      selectedFormat === 'doubles_groups' ?
+        (parseInt(tournamentSize, 10) >= 2 && parseInt(tournamentSize, 10) <= 32) :
+        !!tournamentSize
     );
 
   return (
@@ -182,14 +178,21 @@ const TournamentSetup = ({ onCreateTournament }: TournamentSetupProps) => {
       {selectedFormat && (
         <div className="mb-8">
           <h3 className="text-xl font-semibold text-white mb-4">3. Número de Participantes</h3>
-          {selectedFormat === 'super8' ? (
+          {selectedFormat === 'super8' || selectedFormat === 'king_of_the_court' ? (
             <div className="bg-gray-600 border border-gray-500 rounded-md px-4 py-3 text-gray-300 text-lg">
-              8 jogadores (fixo)
+              {tournamentSize} jogadores (fixo)
             </div>
-          ) : selectedFormat === 'super16' || selectedFormat === 'king_of_the_court' ? (
-            <div className="bg-gray-600 border border-gray-500 rounded-md px-4 py-3 text-gray-300 text-lg">
-              16 jogadores (fixo)
-            </div>
+          ) : selectedFormat === 'super16' ? (
+                <Select value={tournamentSize} onValueChange={setTournamentSize}>
+                    <SelectTrigger className="bg-gray-700 border-gray-600 text-white text-lg p-4">
+                        <SelectValue placeholder="Selecione o número de jogadores" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {getSizeOptions(selectedFormat).map(option => (
+                            <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
           ) : selectedFormat === 'doubles_groups' ? (
             <div>
               <Input
@@ -199,9 +202,8 @@ const TournamentSetup = ({ onCreateTournament }: TournamentSetupProps) => {
                 value={tournamentSize}
                 onChange={e => {
                   const val = e.target.value;
-                  // se maior que 32, limita
                   if (parseInt(val, 10) > 32) setTournamentSize("32");
-                  else setTournamentSize(val.replace(/^0+/, '')); // não deixa zeros à esquerda
+                  else setTournamentSize(val.replace(/^0+/, ''));
                 }}
                 placeholder="Informe o número de duplas (min: 2, max: 32)"
                 className="bg-gray-700 border-gray-600 text-white text-lg p-4"
