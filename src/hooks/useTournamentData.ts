@@ -1,56 +1,55 @@
-
-import { useState, useEffect } from 'react';
-
-interface TournamentData {
-  name: string;
-  format: string;
-  size: number;
-  status: string;
-  players: any[];
-  teams: any[];
-  matches: any[];
-  groups: any[];
-  createdAt?: string;
-}
+import { useState, useEffect, useCallback } from 'react';
 
 export const useTournamentData = () => {
-  const [tournamentData, setTournamentData] = useState<TournamentData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [tournamentData, setTournamentData] = useState<any>(() => {
+    try {
+      const saved = localStorage.getItem('tournamentData');
+      return saved ? JSON.parse(saved) : null;
+    } catch (error) {
+      console.error("Failed to parse tournament data from localStorage", error);
+      return null;
+    }
+  });
 
   useEffect(() => {
-    // Load from localStorage on component mount
-    const savedData = localStorage.getItem('tournamentData');
-    if (savedData) {
-      try {
-        setTournamentData(JSON.parse(savedData));
-      } catch (error) {
-        console.error('Error parsing saved tournament data:', error);
-        setTournamentData(null);
-      }
+    if (tournamentData) {
+      localStorage.setItem('tournamentData', JSON.stringify(tournamentData));
+    } else {
+      localStorage.removeItem('tournamentData');
     }
-    setIsLoading(false);
+  }, [tournamentData]);
+
+  const updateTournamentData = useCallback((data: any) => {
+    setTournamentData(data);
   }, []);
 
-  const updateTournament = (updates: Partial<TournamentData>) => {
-    setTournamentData(prevData => {
-      const newData = prevData ? { ...prevData, ...updates } : updates as TournamentData;
-      
-      // Save to localStorage
-      localStorage.setItem('tournamentData', JSON.stringify(newData));
-      
-      return newData;
-    });
-  };
+  const createTournament = useCallback((data: any) => {
+    const dataWithDefaults = {
+        ...data,
+        players: data.players || [],
+        teams: data.teams || [],
+        matches: data.matches || [],
+        groups: data.groups || [],
+        createdAt: new Date().toISOString()
+    };
+    setTournamentData(dataWithDefaults);
+  }, []);
 
-  const resetTournament = () => {
-    setTournamentData(null);
-    localStorage.removeItem('tournamentData');
-  };
+  const clearTournament = useCallback(() => {
+    if (window.confirm("Tem certeza que deseja apagar este torneio? Essa ação não pode ser desfeita.")) {
+        setTournamentData(null);
+    }
+  }, []);
+  
+  const loadTournament = useCallback((data: any) => {
+    setTournamentData(data);
+  }, [])
 
   return {
     tournamentData,
-    updateTournament,
-    resetTournament,
-    isLoading
+    updateTournament: updateTournamentData,
+    createTournament,
+    clearTournament,
+    loadTournament,
   };
 };
