@@ -1,38 +1,84 @@
+import { Badge } from '@/components/ui/badge';
+import { 
+  Users, 
+  UserPlus, 
+  LayoutGrid, 
+  Shield, 
+  Swords, 
+  Crown, 
+  Medal, 
+  CheckCircle,
+  Icon as LucideIcon // Importação genérica para o tipo
+} from 'lucide-react';
 
-export const getPhaseTitle = (phase: string) => {
-  const phaseNames = {
-    'group_stage': 'Fase de Grupos',
-    'round_of_16': 'Oitavas de Final',
-    'quarterfinals': 'Quartas de Final',
-    'semifinals': 'Semifinais',
-    'final': 'Final',
-    'third_place': 'Disputa de 3º Lugar',
-    'phase1_groups': 'Fase 1 - Grupos',
-    'phase2_playoffs': 'Fase 2 - Playoffs',  
-    'phase3_final': 'Fase 3 - Final',
-    'playoffs': 'Playoffs',
-    'finished': 'Torneio Finalizado',
-    'registration': 'Inscrições',
-    'playing': 'Em Andamento'
-  };
-  return phaseNames[phase] || 'Jogos do Torneio';
+// Função para obter o título da fase
+export const getPhaseTitle = (phase: string): string => {
+  switch (phase) {
+    case 'registration':
+      return 'Cadastro';
+    case 'teams_defined':
+        return 'Definição de Duplas';
+    case 'group_stage':
+    case 'phase1_groups':
+      return 'Fase de Grupos';
+    case 'phase2_playoffs':
+        return 'Playoffs'
+    case 'round_of_16':
+      return 'Oitavas de Final';
+    case 'quarterfinals':
+      return 'Quartas de Final';
+    case 'semifinals':
+      return 'Semifinais';
+    case 'final':
+      return 'Final';
+    case 'third_place':
+        return 'Disputa de 3º Lugar'
+    case 'finished':
+      return 'Finalizado';
+    default:
+      return 'Fase Desconhecida';
+  }
 };
 
-export const getStatusBadge = (status: string) => {
-  const statusMap = {
-    registration: { label: 'Inscrições', color: 'bg-yellow-500' },
-    playing: { label: 'Em Andamento', color: 'bg-green-500' },
-    finished: { label: 'Finalizado', color: 'bg-blue-500' },
-    group_stage: { label: 'Fase de Grupos', color: 'bg-orange-500' },
-    round_of_16: { label: 'Oitavas de Final', color: 'bg-purple-500' },
-    quarterfinals: { label: 'Quartas de Final', color: 'bg-red-500' },
-    semifinals: { label: 'Semifinais', color: 'bg-pink-500' },
-    final: { label: 'Final', color: 'bg-gold-500' },
-    third_place: { label: 'Disputa 3º Lugar', color: 'bg-amber-500' },
-    phase1_groups: { label: 'Fase 1 - Grupos', color: 'bg-orange-500' },
-    phase2_playoffs: { label: 'Fase 2 - Playoffs', color: 'bg-purple-500' },
-    phase3_final: { label: 'Fase 3 - Final', color: 'bg-red-500' },
-  };
-  
-  return statusMap[status] || { label: 'Desconhecido', color: 'bg-gray-500' };
+// NOVA FUNÇÃO: Retorna o ícone correspondente à fase
+export const getPhaseIcon = (phase: string): LucideIcon => {
+    switch (phase) {
+      case 'registration':
+        return UserPlus;
+      case 'teams_defined':
+        return Users;
+      case 'group_stage':
+      case 'phase1_groups':
+      case 'phase2_playoffs':
+        return LayoutGrid;
+      case 'round_of_16':
+      case 'quarterfinals':
+        return Shield;
+      case 'semifinals':
+        return Swords;
+      case 'final':
+        return Crown;
+      case 'third_place':
+        return Medal;
+      case 'finished':
+        return CheckCircle;
+      default:
+        return Users; // Ícone padrão
+    }
 };
+
+// Função para o estilo do badge (opcional, mas bom ter)
+export const getPhaseBadgeVariant = (phase: string): "default" | "secondary" | "destructive" | "outline" => {
+    switch (phase) {
+        case 'registration':
+        case 'teams_defined':
+          return 'secondary';
+        case 'finished':
+          return 'default';
+        case 'final':
+        case 'third_place':
+          return 'destructive'
+        default:
+          return 'outline';
+      }
+}
