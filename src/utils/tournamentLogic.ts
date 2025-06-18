@@ -1,3 +1,5 @@
+// Conteúdo completo para: src/utils/tournamentLogic.ts
+
 export const generateMatches = (tournamentData: any) => {
   const { format, teams, players, status } = tournamentData;
   
@@ -386,3 +388,48 @@ export const shuffleArray = (array: any[]) => {
   }
   return newArray;
 };
+
+// ===================================================================
+// NOVA FUNÇÃO CENTRALIZADA
+// ===================================================================
+/**
+ * Obtém o nome de exibição de um participante (jogador ou time).
+ * @param participantId - O ID do time, ou um array de IDs de jogadores.
+ * @param tournamentData - O objeto completo com os dados do torneio.
+ * @returns O nome formatado do participante ou uma mensagem de erro.
+ */
+export function getParticipantDisplayName(participantId: any, tournamentData: any): string {
+  const { players, teams, format } = tournamentData;
+
+  if (!players || !participantId) {
+    return 'Participante inválido';
+  }
+
+  // Formatos individuais onde o ID é do próprio jogador
+  if (format === 'super8' && Array.isArray(participantId)) {
+    return participantId.map(pId => players.find((p: any) => p.id === pId)?.name || 'N/A').join(' / ');
+  }
+
+  // Formatos de duplas
+  if (teams) {
+    const team = teams.find((t: any) => t.id === participantId);
+    if (team) {
+      // Se o time tem `playerIds`, constrói o nome a partir deles (padrão para super16 e doubles_groups)
+      if (team.playerIds && team.playerIds.length > 0) {
+        return team.playerIds.map((pId: string) => players.find((p: any) => p.id === pId)?.name || 'N/A').join(' / ');
+      }
+      // Se não, usa o nome do time (pode ser um fallback)
+      if (team.name) {
+        return team.name;
+      }
+    }
+  }
+  
+  // Fallback para IDs que não são de time (ex: jogador individual em um formato de duplas antes do sorteio)
+  const player = players.find((p: any) => p.id === participantId);
+  if (player) {
+    return player.name;
+  }
+
+  return 'Nome não encontrado';
+}

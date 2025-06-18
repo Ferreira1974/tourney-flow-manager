@@ -1,9 +1,10 @@
+// Conteúdo completo para: src/components/MatchManager.tsx
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { getNextPhase } from '@/utils/tournamentLogic';
-import { getQualifiedTeams } from '@/utils/tournamentLogic';
+import { getNextPhase, getQualifiedTeams, getParticipantDisplayName } from '@/utils/tournamentLogic'; // <-- MUDANÇA: Importa a função
 import GameOptionsCard from './GameOptionsCard';
 
 interface MatchManagerProps {
@@ -15,7 +16,6 @@ const MatchManager = ({ tournamentData, updateTournament }: MatchManagerProps) =
   const [scores, setScores] = useState<any>({});
 
   const handleScoreChange = (matchId: string, team: 'score1' | 'score2', value: string) => {
-    // Permite apenas números no input
     const numericValue = value.replace(/[^0-9]/g, '');
     setScores((prev: any) => ({
       ...prev,
@@ -25,16 +25,8 @@ const MatchManager = ({ tournamentData, updateTournament }: MatchManagerProps) =
       },
     }));
   };
-
-  const getTeamName = (teamId: any) => {
-    if (Array.isArray(teamId)) { // Super 8 format
-        return teamId.map(pId => tournamentData.players.find((p: any) => p.id === pId)?.name || 'N/A').join(' / ');
-    }
-    const team = tournamentData.teams.find((t: any) => t.id === teamId);
-    if (!team) return 'Equipe não encontrada';
-    
-    return team.playerIds.map((pId: string) => tournamentData.players.find((p: any) => p.id === pId)?.name || 'N/A').join(' / ');
-  };
+  
+  // MUDANÇA: A função getTeamName foi removida daqui. Usaremos getParticipantDisplayName diretamente no JSX.
 
   const handleSaveScore = (matchId: string) => {
     const matchScores = scores[matchId];
@@ -59,7 +51,6 @@ const MatchManager = ({ tournamentData, updateTournament }: MatchManagerProps) =
     const updatedData = {
         ...tournamentData,
         status: nextPhaseName,
-        // Mantém as equipes qualificadas para a próxima fase poder usá-las
         teams: qualifiedTeams 
     };
     
@@ -75,7 +66,6 @@ const MatchManager = ({ tournamentData, updateTournament }: MatchManagerProps) =
   return (
     <div className="space-y-6">
         <GameOptionsCard tournamentData={tournamentData}/>
-        {/* Renderização dos jogos, etc. */}
         {tournamentData.matches.filter((m:any) => m.phase === tournamentData.status).map((match: any) => (
             <Card key={match.id} className="bg-gray-800 border-gray-700 text-white">
                 <CardHeader>
@@ -83,7 +73,8 @@ const MatchManager = ({ tournamentData, updateTournament }: MatchManagerProps) =
                 </CardHeader>
                 <CardContent className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                        <span>{getTeamName(match.teamIds[0])}</span>
+                        {/* MUDANÇA: Usa a nova função */}
+                        <span>{getParticipantDisplayName(match.teamIds[0], tournamentData)}</span>
                         <Input
                             type="text"
                             value={scores[match.id]?.score1 || ''}
@@ -99,11 +90,11 @@ const MatchManager = ({ tournamentData, updateTournament }: MatchManagerProps) =
                             className="w-16 bg-gray-700 border-gray-600 text-center"
                             disabled={!!match.winnerId}
                         />
-                        <span>{getTeamName(match.teamIds[1])}</span>
+                        {/* MUDANÇA: Usa a nova função */}
+                        <span>{getParticipantDisplayName(match.teamIds[1], tournamentData)}</span>
                     </div>
                     <Button 
                         onClick={() => handleSaveScore(match.id)}
-                        // CORREÇÃO DA LÓGICA DE HABILITAÇÃO
                         disabled={!scores[match.id]?.score1 || !scores[match.id]?.score2 || !!match.winnerId}
                     >
                         Salvar
