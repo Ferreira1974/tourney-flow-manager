@@ -40,7 +40,7 @@ export const getPhaseTitle = (phase: string): string => {
   }
 };
 
-// NOVA FUNÇÃO: Retorna o ícone correspondente à fase
+// Função que retorna o ícone correspondente à fase
 export const getPhaseIcon = (phase: string): LucideIcon => {
     switch (phase) {
       case 'registration':
@@ -67,8 +67,8 @@ export const getPhaseIcon = (phase: string): LucideIcon => {
     }
 };
 
-// Função para o estilo do badge (opcional, mas bom ter)
-export const getPhaseBadgeVariant = (phase: string): "default" | "secondary" | "destructive" | "outline" => {
+// CORREÇÃO: Função renomeada de "getPhaseBadgeVariant" para "getStatusBadge"
+export const getStatusBadge = (phase: string): "default" | "secondary" | "destructive" | "outline" => {
     switch (phase) {
         case 'registration':
         case 'teams_defined':
