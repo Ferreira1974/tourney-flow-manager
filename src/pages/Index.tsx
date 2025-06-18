@@ -12,24 +12,22 @@ import TournamentHeader from '@/components/TournamentHeader';
 import { generateMatches } from '@/utils/tournamentLogic';
 
 const IndexPage = () => {
-  // CORREÇÃO: Alterado de desestruturação de objeto para array
-  const [
+  // CORREÇÃO: Voltando a usar desestruturação de OBJETO para corresponder ao hook
+  const {
     tournamentData,
     updateTournament,
     createTournament,
     clearTournament,
     loadTournament,
-  ] = useTournamentData();
+  } = useTournamentData();
 
   const handleCreateTournament = (data: any) => {
     let initialStatus = 'registration';
     let teams = [];
 
-    // Para o formato Super 8, os jogadores já são as "equipes"
     if (data.format === 'super8') {
       initialStatus = 'teams_defined';
     }
-    // Para o formato de duplas pré-definidas (não Super 16)
     else if (data.format === 'doubles_groups') {
         teams = Array.from({ length: data.size }, (_, i) => ({
             id: `t_${i}`,
@@ -45,7 +43,7 @@ const IndexPage = () => {
   const handleStartTournament = useCallback(() => {
     if (!tournamentData) return;
     
-    let phase = 'group_stage'; // Padrão para formatos de grupo
+    let phase = 'group_stage';
     if (tournamentData.format === 'super8') {
       phase = 'playing';
     } else if (tournamentData.format === 'king_of_the_court') {
@@ -77,29 +75,7 @@ const IndexPage = () => {
   }
   
   const renderContent = () => {
-    // Fase de Registro ou Definição de Duplas
     if (['registration', 'teams_defined'].includes(tournamentData.status)) {
-        if(tournamentData.format === 'doubles_groups') {
-            // Se for duplas, podemos ir direto pra tela de jogos para definir os jogadores por dupla
-             return (
-                <Tabs defaultValue="participants" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="participants">Participantes</TabsTrigger>
-                    <TabsTrigger value="settings">Configurações</TabsTrigger>
-                </TabsList>
-                <TabsContent value="participants">
-                    <ParticipantManager
-                        tournamentData={tournamentData}
-                        updateTournament={updateTournament}
-                        onStartTournament={handleStartTournament}
-                    />
-                </TabsContent>
-                <TabsContent value="settings">
-                    <p>Configurações Gerais</p>
-                </TabsContent>
-                </Tabs>
-             )
-        }
         return (
             <ParticipantManager
                 tournamentData={tournamentData}
@@ -109,7 +85,6 @@ const IndexPage = () => {
         );
     }
 
-    // Torneio em andamento
     return (
       <Tabs defaultValue="games" className="w-full">
         <TabsList className="grid w-full grid-cols-4">
