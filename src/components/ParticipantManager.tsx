@@ -118,7 +118,7 @@ const ParticipantManager = ({ tournamentData, onUpdate }: ParticipantManagerProp
       case 'super8':
         return playerCount === 8;
       case 'super16':
-        return playerCount === 24 || playerCount === 32; // 24 ou 32 jogadores
+        return playerCount === 24 || playerCount === 32; // 24 ou 32 jogadores (12 ou 16 duplas)
       case 'doubles_groups':
         return playerCount >= 8 && playerCount % 2 === 0;
       case 'king_of_the_court':
@@ -133,7 +133,7 @@ const ParticipantManager = ({ tournamentData, onUpdate }: ParticipantManagerProp
       case 'super8':
         return 'Exatamente 8 jogadores';
       case 'super16':
-        return '24 jogadores (3 grupos) ou 32 jogadores (4 grupos)'; // Corrigido
+        return '24 jogadores (3 grupos) ou 32 jogadores (4 grupos)';
       case 'doubles_groups':
         return 'Mínimo 8 jogadores (número par)';
       case 'king_of_the_court':

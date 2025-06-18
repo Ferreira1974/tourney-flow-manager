@@ -1,4 +1,3 @@
-
 export const generateMatches = (tournamentData: any) => {
   const { format, teams, players, status } = tournamentData;
   
@@ -153,10 +152,10 @@ const generateSuper16GroupStageMatches = (teams: any[]) => {
   // Embaralhar times para sorteio das chaves
   const shuffledTeams = [...teams].sort(() => Math.random() - 0.5);
   
-  // Determinar número de grupos baseado no número de duplas
+  // Super 16: 24 jogadores = 12 duplas = 3 grupos de 4 duplas OU 32 jogadores = 16 duplas = 4 grupos de 4 duplas
   const numTeams = shuffledTeams.length;
   let numGroups = 0;
-  let teamsPerGroup = 4; // Sempre 4 duplas por grupo
+  const teamsPerGroup = 4; // Sempre 4 duplas por grupo
   
   if (numTeams === 12) { // 24 jogadores = 12 duplas = 3 grupos de 4
     numGroups = 3;
@@ -164,7 +163,7 @@ const generateSuper16GroupStageMatches = (teams: any[]) => {
     numGroups = 4;
   } else {
     // Fallback caso não seja exatamente 12 ou 16
-    numGroups = Math.ceil(numTeams / 4);
+    throw new Error(`Super 16 requer exatamente 12 ou 16 duplas, mas foram fornecidas ${numTeams}`);
   }
   
   // Criar grupos
